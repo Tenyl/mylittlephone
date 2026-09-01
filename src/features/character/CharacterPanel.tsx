@@ -1,6 +1,7 @@
-import { CalendarBlank, Check, ChatCenteredText, FileText, IdentificationCard, Trash, UserFocus } from '@phosphor-icons/react'
+import { CalendarBlank, Check, ChatCenteredText, FileText, IdentificationCard, LockKey, Trash, UserFocus } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
 import { FileImportControl } from '../../components/FileImportControl'
+import { BUNDLED_CHARACTER_ID } from '../../sillytavern/default-content'
 import type { CharacterCard } from '../../sillytavern/types'
 
 interface CharacterPanelProps {
@@ -23,6 +24,8 @@ export function CharacterPanel({ characters, activeCharacterId, onSelect, onImpo
     () => characters.find((item) => item.id === selectedId) ?? characters.find((item) => item.id === activeCharacterId) ?? characters[0] ?? null,
     [activeCharacterId, characters, selectedId],
   )
+  const isBundledCharacter = selected?.id === BUNDLED_CHARACTER_ID
+    && selected.extensions.mylittlephone_builtin === true
 
   useEffect(() => {
     if (activeCharacterId) setSelectedId(activeCharacterId)
@@ -70,12 +73,24 @@ export function CharacterPanel({ characters, activeCharacterId, onSelect, onImpo
             </div>
           </section>
           <div className="trait-row panel-traits">{selected.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-          <section className="detail-section"><h4><UserFocus size={17} />角色描述</h4><p>{selected.description || '角色卡未提供描述。'}</p></section>
-          <section className="detail-grid">
-            <div><h4><ChatCenteredText size={17} />性格</h4><p>{selected.personality || '角色卡未提供性格说明。'}</p></div>
-            <div><h4><IdentificationCard size={17} />场景</h4><p>{selected.scenario || '角色卡未提供初始场景。'}</p></div>
-          </section>
-          <section className="detail-section"><h4>初始消息</h4><p>{selected.firstMes || '角色卡未提供初始消息。'}</p></section>
+          {isBundledCharacter ? (
+            <section className="builtin-character-notice" aria-labelledby={`builtin-character-notice-${selected.id}`}>
+              <span aria-hidden="true"><LockKey size={24} weight="duotone" /></span>
+              <div>
+                <h4 id={`builtin-character-notice-${selected.id}`}>内置角色设定已隐藏</h4>
+                <p>迷迭香的角色提示词由应用维护，不在界面中展示。你导入的角色卡仍可完整查看。</p>
+              </div>
+            </section>
+          ) : (
+            <>
+              <section className="detail-section"><h4><UserFocus size={17} />角色描述</h4><p>{selected.description || '角色卡未提供描述。'}</p></section>
+              <section className="detail-grid">
+                <div><h4><ChatCenteredText size={17} />性格</h4><p>{selected.personality || '角色卡未提供性格说明。'}</p></div>
+                <div><h4><IdentificationCard size={17} />场景</h4><p>{selected.scenario || '角色卡未提供初始场景。'}</p></div>
+              </section>
+              <section className="detail-section"><h4>初始消息</h4><p>{selected.firstMes || '角色卡未提供初始消息。'}</p></section>
+            </>
+          )}
           <section className="file-meta">
             <div><FileText size={18} /><span>来源文件<strong>{selected.sourceFile}</strong></span></div>
             <div><CalendarBlank size={18} /><span>导入时间<strong>{new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(selected.importedAt)}</strong></span></div>

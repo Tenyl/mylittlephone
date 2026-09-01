@@ -16,6 +16,7 @@ import { replaceMacros } from './prompt-assembler'
 import type { CharacterCard, ChatPreset, ChatSession } from './types'
 
 export const BUNDLED_CHARACTER_ID = 'builtin-character-rosmontis'
+export const BUNDLED_CHARACTER_VERSION = 2
 export const BUNDLED_PRESET_ID = 'builtin-preset-default'
 export const BUNDLED_CHAT_ID = 'builtin-chat-rosmontis'
 
@@ -38,7 +39,11 @@ export async function loadBundledDefaults(fetcher: typeof fetch = globalThis.fet
     character: {
       ...character,
       id: BUNDLED_CHARACTER_ID,
-      extensions: { ...character.extensions, mylittlephone_builtin: true },
+      extensions: {
+        ...character.extensions,
+        mylittlephone_builtin: true,
+        mylittlephone_builtin_version: BUNDLED_CHARACTER_VERSION,
+      },
     },
     preset: {
       ...importedPreset,
@@ -55,6 +60,21 @@ export async function seedBundledDefaults(loader: BundledDefaultsLoader = loadBu
   const [characters, presets, chats, settings] = await Promise.all([
     getCharacters(), getPresets(), getChats(), getSettings(),
   ])
+  const bundledCharacter = characters.find((character) => (
+    character.id === BUNDLED_CHARACTER_ID && character.extensions.mylittlephone_builtin === true
+  ))
+  const bundledVersion = Number(bundledCharacter?.extensions.mylittlephone_builtin_version ?? 0)
+
+  if (bundledCharacter && bundledVersion < BUNDLED_CHARACTER_VERSION) {
+    const { character } = await loader()
+    await saveCharacter({
+      ...character,
+      importedAt: bundledCharacter.importedAt,
+      updatedAt: Date.now(),
+    })
+    return true
+  }
+
   if (characters.length > 0 || presets.length > 0 || chats.length > 0 || !settings) return false
 
   const { character, preset } = await loader()

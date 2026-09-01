@@ -10,7 +10,7 @@ const v2Card = {
   data: {
     name: '顾遥', description: '长期记录城市夜景。', personality: '克制而敏锐。', scenario: '雨夜旧城。',
     first_mes: '窗外开始下雨了。', mes_example: '', creator_notes: '', system_prompt: '', post_history_instructions: '',
-    alternate_greetings: [], tags: ['都市'], creator: '用户', character_version: '1.0', extensions: {},
+    alternate_greetings: [], tags: ['都市'], creator: '用户', character_version: '1.0', extensions: { mylittlephone_builtin: true },
   },
 }
 
@@ -32,6 +32,8 @@ describe('configuration panels with bundled defaults', () => {
     await openManagementSection(user, /角色卡/)
     const dialog = screen.getByRole('dialog', { name: '角色卡库' })
     expect(within(dialog).getByRole('heading', { name: '迷迭香', level: 3 })).toBeInTheDocument()
+    expect(within(dialog).getByRole('heading', { name: '内置角色设定已隐藏', level: 4 })).toBeInTheDocument()
+    expect(within(dialog).queryByText('罗德岛精英干员。')).not.toBeInTheDocument()
 
     await user.upload(document.querySelector<HTMLInputElement>('#import-character-file')!, new File([
       JSON.stringify(v2Card),
@@ -39,6 +41,7 @@ describe('configuration panels with bundled defaults', () => {
 
     expect(await within(dialog).findByRole('heading', { name: '顾遥' })).toBeInTheDocument()
     expect(within(dialog).getByText('顾遥.json')).toBeInTheDocument()
+    expect(within(dialog).getByText('长期记录城市夜景。')).toBeInTheDocument()
     await user.keyboard('{Escape}')
     expect(screen.getByText('已选择 顾遥')).toBeInTheDocument()
   })

@@ -1,4 +1,4 @@
-import { BUNDLED_CHARACTER_ID, BUNDLED_PRESET_ID, type BundledDefaultsLoader } from '../sillytavern/default-content'
+import { BUNDLED_CHARACTER_ID, BUNDLED_CHARACTER_VERSION, BUNDLED_PRESET_ID, type BundledDefaultsLoader } from '../sillytavern/default-content'
 import type { CharacterCard, ChatPreset } from '../sillytavern/types'
 
 const character: CharacterCard = {
@@ -19,7 +19,7 @@ const character: CharacterCard = {
   tags: ['明日方舟'],
   creator: '',
   characterVersion: '1',
-  extensions: { mylittlephone_builtin: true },
+  extensions: { mylittlephone_builtin: true, mylittlephone_builtin_version: BUNDLED_CHARACTER_VERSION },
   sourceFile: '迷迭香.png',
   importedAt: 1,
   updatedAt: 1,
