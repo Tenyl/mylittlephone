@@ -13,6 +13,12 @@ const v2Card = {
   },
 }
 
+async function openManagementSection(user: ReturnType<typeof userEvent.setup>, name: RegExp) {
+  await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
+  const center = screen.getByRole('dialog', { name: '管理中心' })
+  await user.click(within(center).getByRole('button', { name }))
+}
+
 describe('empty-first configuration panels', () => {
   beforeEach(async () => {
     localStorage.clear()
@@ -22,7 +28,7 @@ describe('empty-first configuration panels', () => {
   it('imports a Character Card V2 JSON and updates readiness', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: '角色卡' }))
+    await openManagementSection(user, /角色卡/)
     const dialog = screen.getByRole('dialog', { name: '角色卡库' })
     expect(within(dialog).getByRole('heading', { name: '角色卡库还是空的' })).toBeInTheDocument()
 
@@ -39,7 +45,7 @@ describe('empty-first configuration panels', () => {
   it('imports and enables a SillyTavern world book', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: '世界书' }))
+    await openManagementSection(user, /世界书/)
     const input = document.querySelector<HTMLInputElement>('#import-worldbook-file')!
     await user.upload(input, new File([JSON.stringify({
       name: '雨城档案', description: '城市背景', entries: {
@@ -66,7 +72,7 @@ describe('empty-first configuration panels', () => {
   it('imports and activates a SillyTavern response preset', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: '对话预设' }))
+    await openManagementSection(user, /对话预设/)
     await user.upload(document.querySelector<HTMLInputElement>('#import-preset-file')!, new File([
       JSON.stringify({ name: '沉浸扮演', main: '扮演 {{char}}。', temp_openai: 0.7, openai_max_tokens: 2048 }),
     ], '沉浸扮演.json', { type: 'application/json' }))
@@ -89,7 +95,7 @@ describe('empty-first configuration panels', () => {
   it('requires two in-app confirmations before clearing all local data', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: '系统设置' }))
+    await openManagementSection(user, /API 与设置/)
     await user.click(screen.getByRole('button', { name: '本地数据' }))
     await user.click(screen.getByRole('button', { name: /清除所有本地数据/ }))
 

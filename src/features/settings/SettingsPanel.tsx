@@ -12,10 +12,11 @@ interface SettingsPanelProps {
   onRequestClear: () => void
   onExport: () => void | Promise<void>
   onImport: (file: File) => void | Promise<void>
+  initialTab?: Tab
 }
 
-export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, onExport, onImport }: SettingsPanelProps) {
-  const [tab, setTab] = useState<Tab>('primary')
+export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, onExport, onImport, initialTab = 'primary' }: SettingsPanelProps) {
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [busy, setBusy] = useState<string | null>(null)
   const [primaryModels, setPrimaryModels] = useState<string[]>([])
   const [secondaryModels, setSecondaryModels] = useState<string[]>([])
@@ -79,12 +80,11 @@ export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, on
 
       {tab === 'game' && (
         <section className="settings-section" aria-labelledby="game-settings-heading">
-          <div className="settings-heading"><span><SlidersHorizontal size={22} /></span><div><h3 id="game-settings-heading">游戏模式与标签</h3><p>流式解析正文、选项、总结、变量与思考内容。</p></div></div>
+          <div className="settings-heading"><span><SlidersHorizontal size={22} /></span><div><h3 id="game-settings-heading">回复格式与标签</h3><p>聊天窗口只展示最终回复；总结与变量仅用于会话内部状态。</p></div></div>
           <label htmlFor="user-display-name">玩家名称</label><input id="user-display-name" value={settings.userName} onChange={(event) => void onUpdate({ userName: event.target.value })} />
-          <label htmlFor="thinking-display">思考显示</label><select id="thinking-display" value={settings.thinkingDisplay} onChange={(event) => void onUpdate({ thinkingDisplay: event.target.value as AppSettings['thinkingDisplay'] })}><option value="fold">折叠显示</option><option value="hide">完全隐藏</option><option value="inline">正文前显示</option></select>
           <fieldset><legend>解析标签</legend><div className="tag-editor">{settings.customTags.map((tag) => <span key={tag}>{tag}<button id={`remove-custom-tag-${tag}`} type="button" aria-label={`删除标签${tag}`} onClick={() => void onUpdate({ customTags: settings.customTags.filter((item) => item !== tag) })}><X size={13} weight="bold" /></button></span>)}</div><div className="tag-add"><label className="sr-only" htmlFor="new-custom-tag">新标签名</label><input id="new-custom-tag" value={newTag} onChange={(event) => setNewTag(event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))} /><button id="add-custom-tag" type="button" disabled={!newTag || settings.customTags.includes(newTag)} onClick={() => { void onUpdate({ customTags: [...settings.customTags, newTag] }); setNewTag('') }}>添加标签</button></div></fieldset>
           <label htmlFor="format-prompt-template">格式提示词</label><textarea id="format-prompt-template" value={settings.formatPromptTemplate} rows={12} onChange={(event) => void onUpdate({ formatPromptTemplate: event.target.value })} />
-          <button id="restore-format-prompt" className="secondary-action" type="button" onClick={() => void onUpdate({ formatPromptTemplate: DEFAULT_FORMAT_PROMPT })}><FloppyDisk size={17} />恢复六标签默认格式</button>
+          <button id="restore-format-prompt" className="secondary-action" type="button" onClick={() => void onUpdate({ formatPromptTemplate: DEFAULT_FORMAT_PROMPT })}><FloppyDisk size={17} />恢复沉浸聊天默认格式</button>
           <div className="schema-notice"><strong>Schema-first 状态系统</strong><span>当前技能版本保留此能力但不启用。</span></div>
         </section>
       )}

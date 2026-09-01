@@ -69,18 +69,6 @@ function mergeStoredSettings(stored?: AppSettings): AppSettings {
   };
 }
 
-function partialParsed(state: ReturnType<typeof useStreamParser>['state']): ParsedTags {
-  return {
-    thinking: state.thinking,
-    maintext: state.maintext,
-    options: state.options,
-    sum: state.sum,
-    varsRaw: state.varsRaw,
-    varsCommands: { merge: {} },
-    unknown: {},
-  };
-}
-
 function visibleFallback(raw: string): string {
   return raw
     .replace(/<(thinking|think)>[\s\S]*?<\/\1>/gi, '')
@@ -418,8 +406,10 @@ export function useSillytavern() {
     const userMessage: ChatMessage = { id: id('message'), role: 'user', content: trimmed, timestamp: startedAt, status: 'sent' };
     const assistantId = id('message');
     const assistantMessage: ChatMessage = { id: assistantId, role: 'assistant', content: '', timestamp: startedAt, status: 'streaming' };
-    let workingChat: ChatSession = { ...baseChat, messages: [...baseChat.messages, userMessage, assistantMessage], updatedAt: startedAt };
-    await replaceChat(workingChat);
+    const userOnlyChat: ChatSession = { ...baseChat, messages: [...baseChat.messages, userMessage], updatedAt: startedAt };
+    let workingChat: ChatSession = { ...userOnlyChat, messages: [...userOnlyChat.messages, assistantMessage] };
+    await replaceChat(userOnlyChat);
+    setChats((current) => current.map((chat) => chat.id === workingChat.id ? workingChat : chat));
     setGeneration({ status: 'streaming', messageId: assistantId, error: null });
 
     const assembled = assemblePrompt({
@@ -442,25 +432,30 @@ export function useSillytavern() {
         messages: assembled.messages,
         onChunk: (delta) => {
           raw += delta;
-          const stream = parser.feed(delta);
-          const streamedAssistant: ChatMessage = { ...assistantMessage, content: stream.maintext, parsed: partialParsed(stream), metadata: { rawContent: raw } };
-          workingChat = { ...workingChat, messages: workingChat.messages.map((message) => message.id === assistantId ? streamedAssistant : message) };
-          setChats((current) => current.map((chat) => chat.id === workingChat.id ? workingChat : chat));
+          parser.feed(delta);
         },
       });
       const { parsed } = parser.finish();
       const { cleanedText, updates } = extractVariables(parsed.maintext || visibleFallback(raw));
       const fromTaggedVars = applyParsedToChat(baseChat.variables ?? {}, parsed).nextVariables;
       const nextVariables = mergeVariables(fromTaggedVars, updates);
+      const visibleParsed: ParsedTags = {
+        ...parsed,
+        thinking: '',
+        maintext: cleanedText,
+        options: [],
+        varsRaw: '',
+        varsCommands: { merge: {} },
+        unknown: {},
+      };
       const finalAssistant: ChatMessage = {
         ...assistantMessage,
         content: cleanedText,
         status: 'sent',
-        parsed,
+        parsed: visibleParsed,
         variablesAfter: structuredClone(nextVariables),
         apiUsed,
         metadata: {
-          rawContent: raw,
           summary: parsed.sum,
           lorebookEntries: assembled.matchedEntries.map((entry) => entry.entry.id),
           processingTime: Date.now() - startedAt,
@@ -473,17 +468,8 @@ export function useSillytavern() {
     } catch (cause) {
       const aborted = cause instanceof DOMException && cause.name === 'AbortError';
       const message = cause instanceof Error ? cause.message : '回复生成失败';
-      const { parsed } = parser.finish();
-      const { cleanedText } = extractVariables(parsed.maintext || visibleFallback(raw));
-      const interruptedAssistant: ChatMessage = {
-        ...assistantMessage,
-        content: cleanedText,
-        status: aborted ? 'interrupted' : 'failed',
-        parsed,
-        metadata: { rawContent: raw, error: aborted ? undefined : message, processingTime: Date.now() - startedAt },
-      };
-      workingChat = { ...workingChat, messages: workingChat.messages.map((item) => item.id === assistantId ? interruptedAssistant : item), updatedAt: Date.now() };
-      await replaceChat(workingChat);
+      parser.finish();
+      await replaceChat({ ...userOnlyChat, updatedAt: Date.now() });
       setGeneration({ status: aborted ? 'idle' : 'error', messageId: null, error: aborted ? null : message });
       if (!aborted) showToast(`回复生成失败：${message}`);
       return false;

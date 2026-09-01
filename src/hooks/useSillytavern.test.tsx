@@ -114,7 +114,9 @@ describe('useSillytavern controller', () => {
 
     const assistant = result.current.activeChat?.messages.at(-1)
     expect(assistant?.content).toBe('你好。')
-    expect(assistant?.parsed?.options).toEqual(['继续'])
+    expect(assistant?.parsed?.thinking).toBe('')
+    expect(assistant?.parsed?.options).toEqual([])
+    expect(assistant?.metadata).not.toHaveProperty('rawContent')
     expect(assistant?.metadata?.summary).toBe('问候')
 
     await act(async () => result.current.branchFromMessage(assistant!.id, '问候分支'))

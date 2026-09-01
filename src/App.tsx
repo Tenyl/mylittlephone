@@ -40,7 +40,7 @@ const noticeId = () => `notice-${Date.now()}-${Math.random().toString(36).slice(
 
 export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
   const chat = useSillytavern()
-  const [activePanel, setActivePanel] = useState<PanelId | 'home' | null>(null)
+  const [activePanel, setActivePanel] = useState<PanelId | 'home' | 'data' | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [form, setForm] = useState<FormState | null>(null)
   const [notices, setNotices] = useState<Notice[]>([])
@@ -121,7 +121,7 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
   ) : activePanel === 'variables' ? (
     <VariablesPanel variables={chat.activeChat?.variables ?? {}} disabled={!chat.activeChat} onSave={async (variables) => { await chat.setChatVariables(variables); pushNotice('success', '变量已保存', '新的变量值会在下一轮提示词中生效。') }} />
   ) : chat.settings ? (
-    <SettingsPanel settings={chat.settings} onUpdate={chat.updateSettings} onNotice={pushNotice} onRequestClear={() => setConfirmation({ kind: 'clear-first' })} onExport={exportBackup} onImport={requestBackupImport} />
+    <SettingsPanel settings={chat.settings} initialTab={activePanel === 'data' ? 'data' : 'primary'} onUpdate={chat.updateSettings} onNotice={pushNotice} onRequestClear={() => setConfirmation({ kind: 'clear-first' })} onExport={exportBackup} onImport={requestBackupImport} />
   ) : null
 
   const panel = activePanel === 'history' ? (
@@ -135,7 +135,7 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
 
   return (
     <>
-      <AppShell settings={chat.settings} activeCharacter={chat.activeCharacter} activeLorebooks={chat.activeLorebooks} activeChat={chat.activeChat} readiness={chat.readiness} generating={chat.generation.status === 'streaming'} onOpenPanel={setActivePanel} onOpenManagement={() => setActivePanel('home')} onStart={() => void createChat()} onSend={chat.sendGameMessage} onStop={chat.stopGeneration} onRegenerate={chat.regenerateLast} onDeleteRound={() => { const item = chat.activeChat?.messages.findLast((message) => message.role === 'user'); if (item && chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onEditMessage={(item) => setForm({ kind: 'edit-message', item })} onDeleteFromMessage={(item) => { if (chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onBranchMessage={(item) => setForm({ kind: 'branch-message', item })} />
+      <AppShell activeCharacter={chat.activeCharacter} activeChat={chat.activeChat} readiness={chat.readiness} generating={chat.generation.status === 'streaming'} onOpenPanel={setActivePanel} onOpenManagement={() => setActivePanel('home')} onStart={() => void createChat()} onSend={chat.sendGameMessage} onStop={chat.stopGeneration} onRegenerate={chat.regenerateLast} onEditMessage={(item) => setForm({ kind: 'edit-message', item })} onDeleteFromMessage={(item) => { if (chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onBranchMessage={(item) => setForm({ kind: 'branch-message', item })} />
       {panel}
       <ToastRegion notices={notices} onDismiss={(id) => setNotices((current) => current.filter((notice) => notice.id !== id))} />
       {confirmation && confirmationCopy && <ConfirmDialog title={confirmationCopy.title} description={confirmationCopy.description} confirmLabel={confirmationCopy.label} onCancel={() => setConfirmation(null)} onConfirm={() => void executeConfirmation()} />}

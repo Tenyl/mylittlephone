@@ -1,5 +1,5 @@
 import { GearSix } from '@phosphor-icons/react'
-import type { AppSettings, CharacterCard, ChatMessage, ChatSession, Lorebook } from '../sillytavern/types'
+import type { CharacterCard, ChatMessage, ChatSession } from '../sillytavern/types'
 import type { SetupReadiness } from '../sillytavern/readiness'
 import { SetupGuide } from '../features/onboarding/SetupGuide'
 import { ChatHeader } from './ChatHeader'
@@ -9,9 +9,7 @@ import { MessageList } from './MessageList'
 export type PanelId = 'character' | 'worldbook' | 'presets' | 'history' | 'variables' | 'settings'
 
 interface AppShellProps {
-  settings: AppSettings
   activeCharacter: CharacterCard | null
-  activeLorebooks: Lorebook[]
   activeChat: ChatSession | null
   readiness: SetupReadiness
   generating: boolean
@@ -21,7 +19,6 @@ interface AppShellProps {
   onSend: (content: string) => boolean | Promise<boolean>
   onStop: () => void
   onRegenerate: () => void | Promise<unknown>
-  onDeleteRound: () => void
   onEditMessage: (message: ChatMessage) => void
   onDeleteFromMessage: (message: ChatMessage) => void
   onBranchMessage: (message: ChatMessage) => void
@@ -29,9 +26,9 @@ interface AppShellProps {
 
 export function AppShell(props: AppShellProps) {
   const {
-    settings, activeCharacter, activeLorebooks, activeChat, readiness, generating,
+    activeCharacter, activeChat, readiness, generating,
     onOpenPanel, onOpenManagement, onStart, onSend, onStop, onRegenerate,
-    onDeleteRound, onEditMessage, onDeleteFromMessage, onBranchMessage,
+    onEditMessage, onDeleteFromMessage, onBranchMessage,
   } = props
 
   return (
@@ -41,8 +38,8 @@ export function AppShell(props: AppShellProps) {
           {activeChat && activeCharacter ? (
             <>
               <ChatHeader character={activeCharacter} chat={activeChat} generating={generating} onOpenHistory={() => onOpenPanel('history')} onOpenManagement={onOpenManagement} />
-              <MessageList messages={activeChat.messages} character={activeCharacter} thinkingDisplay={settings.thinkingDisplay} generating={generating} onPickOption={onSend} onEdit={onEditMessage} onDeleteFrom={onDeleteFromMessage} onBranch={onBranchMessage} />
-              <Composer characterName={activeCharacter.name} generating={generating} enabledLorebooks={activeLorebooks.length} onSend={onSend} onStop={onStop} onRegenerate={onRegenerate} onDeleteRound={onDeleteRound} />
+              <MessageList messages={activeChat.messages} character={activeCharacter} onEdit={onEditMessage} onDeleteFrom={onDeleteFromMessage} onBranch={onBranchMessage} onRegenerate={onRegenerate} />
+              <Composer characterName={activeCharacter.name} generating={generating} onSend={onSend} onStop={onStop} />
             </>
           ) : (
             <div className="setup-column">

@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom'
 import { useRef, type ReactNode } from 'react'
 import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap'
 
-export type ManagementSection = 'home' | 'character' | 'worldbook' | 'presets' | 'variables' | 'settings'
+export type ManagementSection = 'home' | 'character' | 'worldbook' | 'presets' | 'variables' | 'settings' | 'data'
 
 interface ManagementCenterProps {
   section: ManagementSection
@@ -28,6 +28,7 @@ const sectionTitles: Record<ManagementSection, string> = {
   presets: '对话预设',
   variables: '会话变量',
   settings: '系统设置',
+  data: '本地数据',
 }
 
 const managementEntries = [
@@ -36,7 +37,7 @@ const managementEntries = [
   { id: 'presets', section: 'presets' as const, label: '对话预设', helper: '调整提示词与生成参数', icon: SlidersHorizontal },
   { id: 'api', section: 'settings' as const, label: 'API 与设置', helper: '连接模型并配置回复方式', icon: GearSix },
   { id: 'variables', section: 'variables' as const, label: '会话变量', helper: '查看当前会话的运行数据', icon: BracketsCurly },
-  { id: 'local-data', section: 'settings' as const, label: '本地数据', helper: '备份、导入或清理本机内容', icon: Database },
+  { id: 'local-data', section: 'data' as const, label: '本地数据', helper: '备份、导入或清理本机内容', icon: Database },
 ]
 
 export function ManagementCenter({ section, onSelectSection, onClose, children }: ManagementCenterProps) {

@@ -11,11 +11,14 @@ describe('message action contracts', () => {
   it('routes edit, branch, and delete-from-point actions with the exact message', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn(); const onBranch = vi.fn(); const onDeleteFrom = vi.fn()
-    render(<MessageList messages={[message]} character={character} thinkingDisplay="fold" generating={false} onPickOption={vi.fn()} onEdit={onEdit} onBranch={onBranch} onDeleteFrom={onDeleteFrom} />)
+    render(<MessageList messages={[message]} character={character} onEdit={onEdit} onBranch={onBranch} onDeleteFrom={onDeleteFrom} onRegenerate={vi.fn()} />)
 
-    await user.click(screen.getByRole('button', { name: '编辑并重新生成' }))
-    await user.click(screen.getByRole('button', { name: '从此消息创建分支' }))
-    await user.click(screen.getByRole('button', { name: '从此消息开始删除' }))
+    await user.click(screen.getByRole('button', { name: '更多消息操作' }))
+    await user.click(screen.getByRole('menuitem', { name: '编辑并重新生成' }))
+    await user.click(screen.getByRole('button', { name: '更多消息操作' }))
+    await user.click(screen.getByRole('menuitem', { name: '从此消息创建分支' }))
+    await user.click(screen.getByRole('button', { name: '更多消息操作' }))
+    await user.click(screen.getByRole('menuitem', { name: '从此消息开始删除' }))
 
     expect(onEdit).toHaveBeenCalledWith(message)
     expect(onBranch).toHaveBeenCalledWith(message)

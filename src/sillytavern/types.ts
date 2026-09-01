@@ -202,12 +202,8 @@ export interface AppSettings {
 }
 
 export const DEFAULT_FORMAT_PROMPT = `你必须严格按照以下 XML 标签格式输出回复，不要使用 Markdown 包裹：
-<thinking>……</thinking>     ← 可选；内部任何字符都视为思考过程，不被解析
-<maintext>……</maintext>     ← 必填；本回合的剧情正文，可多段，保留换行
-<option>选项 A
-选项 B
-选项 C</option>              ← 必填；至少 2 项，每行一个
-<sum>……</sum>               ← 必填；本回合一句话总结
+<maintext>……</maintext>     ← 必填；只写角色发给用户的聊天内容，可多段，保留换行
+<sum>……</sum>               ← 选填；本回合一句话内部总结，不会展示给用户
 <vars>{ "金钱": +10, "HP": 38 }</vars>   ← 选填；JSON 深合并`;
 
 export const DEFAULT_TAGS = ['maintext', 'option', 'sum', 'vars', 'thinking', 'think'] as const;
@@ -242,7 +238,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   uiMode: 'game',
   customTags: ['maintext', 'option', 'sum', 'vars', 'thinking', 'think'],
   formatPromptTemplate: DEFAULT_FORMAT_PROMPT,
-  thinkingDisplay: 'fold',
+  thinkingDisplay: 'hide',
   schemaFirst: false,
 };
 

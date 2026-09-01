@@ -92,21 +92,25 @@ describe('SillyTavern character chat app', () => {
     expect(screen.getByRole('button', { name: '打开管理中心' })).toBeInTheDocument()
   })
 
-  it('sends with Enter and renders a streamed six-tag reply', async () => {
+  it('hides every streamed fragment and shows only the final role reply', async () => {
     await seedReadyChat()
     vi.stubGlobal('fetch', vi.fn(async () => sseResponse([
       '<thinking>核对天气</thinking><maintext>至少还要下一小时。</maintext>',
       '<option>留在这里\n撑伞离开</option><sum>雨仍在继续</sum><vars>{"天气":"雨"}</vars>',
-    ])))
+    ], 40)))
     const user = userEvent.setup()
     render(<App />)
     const composer = await screen.findByLabelText('输入聊天消息')
 
     await user.type(composer, '今晚会下雨吗？{Enter}')
 
-    await waitFor(() => expect(within(screen.getByLabelText('聊天记录')).getByText('今晚会下雨吗？')).toBeInTheDocument())
-    await waitFor(() => expect(within(screen.getByLabelText('聊天记录')).getByText('至少还要下一小时。')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: /留在这里/ })).toBeInTheDocument()
+    const log = screen.getByLabelText('聊天记录')
+    expect(await within(log).findByRole('status', { name: `${character.name}正在输入` })).toBeInTheDocument()
+    expect(within(log).getByText('今晚会下雨吗？')).toBeInTheDocument()
+    expect(within(log).queryByText('至少还要下一小时。')).not.toBeInTheDocument()
+    await waitFor(() => expect(within(log).getByText('至少还要下一小时。')).toBeInTheDocument())
+    expect(within(log).queryByRole('status', { name: `${character.name}正在输入` })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /留在这里/ })).not.toBeInTheDocument()
     expect(screen.queryByText('核对天气')).not.toBeInTheDocument()
   })
 
@@ -132,7 +136,10 @@ describe('SillyTavern character chat app', () => {
     await user.type(composer, '继续说{Enter}')
     await user.click(await screen.findByRole('button', { name: '停止生成' }))
 
-    expect(await screen.findByText('回复已中断')).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('status', { name: `${character.name}正在输入` })).not.toBeInTheDocument())
+    expect(screen.queryByText('回复已中断')).not.toBeInTheDocument()
+    expect(screen.queryByText('还没有说完')).not.toBeInTheDocument()
+    expect(within(screen.getByLabelText('聊天记录')).getByText('继续说')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByLabelText('输入聊天消息')).toBeEnabled())
   })
 })
