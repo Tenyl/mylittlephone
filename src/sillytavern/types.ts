@@ -132,6 +132,35 @@ export interface ChatPreset {
   updatedAt: number;
 }
 
+// ========== Character Card Types ==========
+
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+/** Normalized Character Card V2 data stored entirely in the browser. */
+export interface CharacterCard {
+  id: string;
+  spec: 'chara_card_v2';
+  specVersion: string;
+  name: string;
+  avatar: string;
+  description: string;
+  personality: string;
+  scenario: string;
+  firstMes: string;
+  mesExample: string;
+  creatorNotes: string;
+  systemPrompt: string;
+  postHistoryInstructions: string;
+  alternateGreetings: string[];
+  tags: string[];
+  creator: string;
+  characterVersion: string;
+  extensions: Record<string, JsonValue>;
+  sourceFile: string;
+  importedAt: number;
+  updatedAt: number;
+}
+
 // ========== Settings Types ==========
 
 export interface ApiSettings {
@@ -154,8 +183,10 @@ export interface AppSettings {
   api: ApiSettings;
   /** 'single' = primary API handles all tasks. 'dual' = primary handles story, secondary handles variables. */
   apiMode: 'single' | 'dual';
+  activeCharacterId: string | null;
   activePresetId: string | null;
   activeLorebookIds: string[];
+  activeChatId: string | null;
   userName: string;
   characterName: string;
   theme: 'dark' | 'light';
@@ -166,6 +197,8 @@ export interface AppSettings {
   customTags: string[];
   formatPromptTemplate: string;
   thinkingDisplay: 'fold' | 'hide' | 'inline';
+  /** Reserved for a future skill revision. This release always keeps it disabled. */
+  schemaFirst: false;
 }
 
 export const DEFAULT_FORMAT_PROMPT = `你必须严格按照以下 XML 标签格式输出回复，不要使用 Markdown 包裹：
@@ -182,17 +215,27 @@ export const DEFAULT_OPAQUE_TAGS = ['thinking', 'think'] as const;
 
 export const DEFAULT_SETTINGS: AppSettings = {
   api: {
-    baseUrl: 'https://api.openai.com/v1',
+    baseUrl: '',
     apiKey: '',
-    model: 'gpt-3.5-turbo',
+    model: '',
     timeout: 60000,
+    secondary: {
+      enabled: true,
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      temperature: 0.7,
+      maxTokens: 8000,
+    },
   },
-  apiMode: 'single',
+  apiMode: 'dual',
+  activeCharacterId: null,
   activePresetId: null,
   activeLorebookIds: [],
+  activeChatId: null,
   userName: '用户',
-  characterName: 'AI',
-  theme: 'dark',
+  characterName: '',
+  theme: 'light',
   language: 'zh',
   autoSave: true,
   autoSaveInterval: 30,
@@ -200,6 +243,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   customTags: ['maintext', 'option', 'sum', 'vars', 'thinking', 'think'],
   formatPromptTemplate: DEFAULT_FORMAT_PROMPT,
   thinkingDisplay: 'fold',
+  schemaFirst: false,
 };
 
 // ========== Chat Types ==========

@@ -3,13 +3,14 @@
  */
 
 import Dexie, { Table } from 'dexie';
-import type { Lorebook, ChatPreset, AppSettings, ChatSession } from './types';
+import type { Lorebook, ChatPreset, AppSettings, ChatSession, CharacterCard } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
 const DB_NAME = 'SillyTavernWebDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
-class AppDatabase extends Dexie {
+export class AppDatabase extends Dexie {
+  characters!: Table<CharacterCard>;
   lorebooks!: Table<Lorebook>;
   presets!: Table<ChatPreset>;
   settings!: Table<AppSettings>;
@@ -47,6 +48,21 @@ class AppDatabase extends Dexie {
         await tx.table('settings').put(s);
       }
     });
+    this.version(4).stores({
+      characters: 'id, name, importedAt, updatedAt',
+      lorebooks: 'id, name, updatedAt',
+      presets: 'id, name, updatedAt',
+      settings: 'key',
+      chats: 'id, name, updatedAt',
+    }).upgrade(async tx => {
+      const settings = await tx.table('settings').toCollection().toArray();
+      for (const setting of settings) {
+        setting.activeCharacterId ??= null;
+        setting.activeChatId ??= null;
+        setting.schemaFirst = false;
+        await tx.table('settings').put(setting);
+      }
+    });
   }
 }
 
@@ -62,22 +78,25 @@ export function getDatabase(): AppDatabase {
 export async function initializeDatabase(): Promise<void> {
   const db = getDatabase();
 
-  const presetCount = await db.presets.count();
-  if (presetCount === 0) {
-    const { createDefaultPreset } = await import('./types');
-    const defaultPreset = createDefaultPreset();
-    await db.presets.add({
-      ...defaultPreset,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    } as ChatPreset);
-  }
-
   const settingsCount = await db.settings.count();
   if (settingsCount === 0) {
-    await db.settings.put({ ...DEFAULT_SETTINGS, key: 'settings' });
+    await db.settings.put(getEmptyFirstSettings());
   }
+}
+
+export function getEmptyFirstSettings(): AppSettings {
+  return {
+    ...DEFAULT_SETTINGS,
+    key: 'settings',
+    api: {
+      ...DEFAULT_SETTINGS.api,
+      secondary: DEFAULT_SETTINGS.api.secondary
+        ? { ...DEFAULT_SETTINGS.api.secondary }
+        : undefined,
+    },
+    activeLorebookIds: [],
+    customTags: [...DEFAULT_SETTINGS.customTags],
+  };
 }
 
 export async function clearAllData(): Promise<void> {
@@ -89,6 +108,7 @@ export async function clearAllData(): Promise<void> {
 export interface FullBackup {
   version: number;
   exportedAt: number;
+  characters: CharacterCard[];
   lorebooks: Lorebook[];
   presets: ChatPreset[];
   settings: AppSettings[];
@@ -97,7 +117,8 @@ export interface FullBackup {
 
 export async function exportAllData(): Promise<FullBackup> {
   const db = getDatabase();
-  const [lorebooks, presets, settings, chats] = await Promise.all([
+  const [characters, lorebooks, presets, settings, chats] = await Promise.all([
+    db.characters.toArray(),
     db.lorebooks.toArray(),
     db.presets.toArray(),
     db.settings.toArray(),
@@ -106,6 +127,7 @@ export async function exportAllData(): Promise<FullBackup> {
   return {
     version: DB_VERSION,
     exportedAt: Date.now(),
+    characters,
     lorebooks,
     presets,
     settings,
@@ -118,16 +140,31 @@ export async function importAllData(backup: FullBackup): Promise<void> {
     throw new Error('备份格式无效');
   }
   const db = getDatabase();
-  await db.transaction('rw', db.lorebooks, db.presets, db.settings, db.chats, async () => {
+  await db.transaction('rw', db.characters, db.lorebooks, db.presets, db.settings, db.chats, async () => {
+    await db.characters.clear();
     await db.lorebooks.clear();
     await db.presets.clear();
     await db.settings.clear();
     await db.chats.clear();
+    if (Array.isArray(backup.characters)) await db.characters.bulkPut(backup.characters);
     if (Array.isArray(backup.lorebooks)) await db.lorebooks.bulkPut(backup.lorebooks);
     if (Array.isArray(backup.presets)) await db.presets.bulkPut(backup.presets);
     if (Array.isArray(backup.settings)) await db.settings.bulkPut(backup.settings);
     if (Array.isArray(backup.chats)) await db.chats.bulkPut(backup.chats);
   });
+}
+
+export async function getCharacters(): Promise<CharacterCard[]> {
+  return getDatabase().characters.orderBy('updatedAt').reverse().toArray();
+}
+
+export async function saveCharacter(character: CharacterCard): Promise<string> {
+  await getDatabase().characters.put(character);
+  return character.id;
+}
+
+export async function deleteCharacter(id: string): Promise<void> {
+  await getDatabase().characters.delete(id);
 }
 
 export async function getLorebooks(): Promise<Lorebook[]> {
