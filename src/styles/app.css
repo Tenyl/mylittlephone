@@ -52,7 +52,7 @@
 .message-row.user { justify-content: flex-end; }
 .message-row > img { margin-top: 18px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(38,62,91,.12); }
 .avatar-space { width: 36px; flex: 0 0 36px; }
-.message-stack { max-width: min(72%, 560px); display: grid; gap: 5px; }
+.message-stack { max-width: min(72%, 560px); display: grid; gap: 5px; position: relative; }
 .user .message-stack { justify-items: end; }
 .message-meta { padding: 0 4px; color: var(--ink-faint); font-size: 10px; }
 .message-bubble { width: fit-content; padding: 10px 14px; border: 1px solid rgba(255,255,255,.78); border-radius: 6px 17px 17px 17px; color: #263548; background: rgba(255,255,255,.92); box-shadow: 0 4px 14px rgba(48,72,98,.07); font-size: 14px; line-height: 1.72; white-space: pre-wrap; overflow-wrap: anywhere; }

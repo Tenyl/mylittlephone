@@ -5,6 +5,7 @@ import App from './App'
 import {
   clearAllData,
   getEmptyFirstSettings,
+  getChats,
   initializeDatabase,
   saveCharacter,
   saveChat,
@@ -141,5 +142,8 @@ describe('SillyTavern character chat app', () => {
     expect(screen.queryByText('还没有说完')).not.toBeInTheDocument()
     expect(within(screen.getByLabelText('聊天记录')).getByText('继续说')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByLabelText('输入聊天消息')).toBeEnabled())
+    const persisted = await getChats()
+    expect(persisted[0].messages.at(-1)).toMatchObject({ role: 'user', content: '继续说' })
+    expect(persisted[0].messages.some((message) => message.status === 'interrupted' || message.content.includes('还没有说完'))).toBe(false)
   })
 })

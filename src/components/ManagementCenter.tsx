@@ -9,7 +9,7 @@ import {
   X,
 } from '@phosphor-icons/react'
 import { createPortal } from 'react-dom'
-import { useRef, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap'
 
 export type ManagementSection = 'home' | 'character' | 'worldbook' | 'presets' | 'variables' | 'settings' | 'data'
@@ -43,8 +43,10 @@ const managementEntries = [
 export function ManagementCenter({ section, onSelectSection, onClose, children }: ManagementCenterProps) {
   const dialogRef = useRef<HTMLElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const backRef = useRef<HTMLButtonElement>(null)
   const title = sectionTitles[section]
   useDialogFocusTrap(dialogRef, closeRef, onClose)
+  useEffect(() => { if (section !== 'home') backRef.current?.focus() }, [section])
 
   return createPortal(
     <div className="management-scrim" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -59,7 +61,7 @@ export function ManagementCenter({ section, onSelectSection, onClose, children }
         <header className="management-header">
           <div className="management-heading">
             {section !== 'home' && (
-              <button id="management-back-home" className="icon-button" type="button" aria-label="返回管理中心" onClick={() => onSelectSection('home')}>
+              <button ref={backRef} id="management-back-home" className="icon-button" type="button" aria-label="返回管理中心" onClick={() => onSelectSection('home')}>
                 <ArrowLeft size={20} />
               </button>
             )}
