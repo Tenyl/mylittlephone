@@ -2,7 +2,7 @@
  * Lorebook Matching Engine
  */
 
-import type { Lorebook, LorebookEntry, MatchedEntry } from './types';
+import type { Lorebook, LorebookEntry, MatchedEntry } from './types.js';
 
 export class LorebookEngine {
   private lorebook: Lorebook;

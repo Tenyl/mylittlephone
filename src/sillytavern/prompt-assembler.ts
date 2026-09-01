@@ -2,10 +2,10 @@
  * Prompt Assembler
  */
 
-import type { ChatPreset, Lorebook, ChatMessage, MatchedEntry, CharacterCard } from './types';
-import { DEFAULT_PROMPT_ORDER } from './types';
-import { createLorebookEngine } from './lorebook-engine';
-import { formatVariablesForPrompt } from './variables';
+import type { ChatPreset, Lorebook, ChatMessage, MatchedEntry, CharacterCard } from './types.js';
+import { DEFAULT_PROMPT_ORDER } from './types.js';
+import { createLorebookEngine } from './lorebook-engine.js';
+import { formatVariablesForPrompt } from './variables.js';
 
 export interface AssembleOptions {
   userInput: string;

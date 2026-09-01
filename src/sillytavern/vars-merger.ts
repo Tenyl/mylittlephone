@@ -1,4 +1,4 @@
-import type { VarsPatch } from './types';
+import type { VarsPatch } from './types.js';
 
 export function parseVarsBlock(raw: string): VarsPatch {
   const trimmed = raw.trim();

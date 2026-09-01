@@ -1,4 +1,4 @@
-import type { CharacterCard, ChatMessage, ChatPreset, Lorebook } from './types'
+import type { CharacterCard, ChatMessage, ChatPreset, Lorebook } from './types.js'
 
 export const MANAGED_CHAT_ENDPOINT = '/api/chat'
 export const MANAGED_CHAT_VERSION = 1 as const

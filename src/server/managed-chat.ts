@@ -1,10 +1,10 @@
-import type { ManagedChatRequest } from '../sillytavern/managed-api'
-import { BUNDLED_CHARACTER_ID, MANAGED_CHAT_VERSION } from '../sillytavern/managed-api'
+import type { ManagedChatRequest } from '../sillytavern/managed-api.js'
+import { BUNDLED_CHARACTER_ID, MANAGED_CHAT_VERSION } from '../sillytavern/managed-api.js'
 import { gunzipSync } from 'node:zlib'
-import { assemblePrompt } from '../sillytavern/prompt-assembler'
-import { buildPresetGenerationOptions } from '../sillytavern/preset-request'
-import type { CharacterCard, ChatMessage, ChatPreset, JsonValue, Lorebook } from '../sillytavern/types'
-import { sanitizeOpenAiSseStream } from '../sillytavern/sse-stream'
+import { assemblePrompt } from '../sillytavern/prompt-assembler.js'
+import { buildPresetGenerationOptions } from '../sillytavern/preset-request.js'
+import type { CharacterCard, ChatMessage, ChatPreset, JsonValue, Lorebook } from '../sillytavern/types.js'
+import { sanitizeOpenAiSseStream } from '../sillytavern/sse-stream.js'
 
 const MAX_REQUEST_CHARS = 1_000_000
 const MAX_USER_INPUT_CHARS = 20_000
