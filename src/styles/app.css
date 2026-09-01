@@ -181,3 +181,26 @@
 
 .mobile-nav-scrim { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; background: rgba(23,34,49,.32); backdrop-filter: blur(7px); }
 .mobile-nav-sheet { width: 100%; padding: 16px 14px max(20px, env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: rgba(249,252,255,.97); box-shadow: 0 -20px 48px rgba(27,45,66,.18); animation: mobile-sheet-in 220ms var(--ease-spring); }.mobile-nav-sheet header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 12px; }.mobile-nav-sheet h2 { margin: 3px 0 0; font-size: 18px; }.mobile-nav-sheet nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }.mobile-nav-sheet nav button { min-height: 76px; display: flex; align-items: center; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 15px; background: white; cursor: pointer; text-align: left; }.mobile-nav-sheet nav button > span { width: 38px; height: 38px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; color: var(--primary); background: var(--primary-soft); }.mobile-nav-sheet nav button div { min-width: 0; display: grid; gap: 3px; }.mobile-nav-sheet nav strong { font-size: 11px; }.mobile-nav-sheet nav small { color: var(--ink-faint); font-size: 8px; line-height: 1.4; }@keyframes mobile-sheet-in { from { opacity: 0; transform: translateY(32px); } }
+
+/* Unified management center */
+.management-scrim { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 24px; background: rgba(19,31,48,.42); backdrop-filter: blur(12px) saturate(110%); animation: scrim-in 180ms ease-out; }
+.management-center { width: min(920px, 100%); height: min(760px, calc(100dvh - 48px)); display: grid; grid-template-rows: auto minmax(0,1fr); overflow: hidden; border: 1px solid rgba(255,255,255,.86); border-radius: 25px; outline: 0; background: rgba(247,250,253,.97); box-shadow: 0 30px 90px rgba(20,38,61,.26); animation: confirm-in 220ms var(--ease-spring); }
+.management-header { min-height: 80px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.56); }
+.management-heading { min-width: 0; display: flex; align-items: center; gap: 12px; }.management-heading h2 { margin: 4px 0 0; font-size: 20px; }
+.management-home, .management-content { min-height: 0; overflow-y: auto; padding: clamp(20px, 4vw, 40px); }
+.management-home > p { max-width: 570px; margin: 0 0 24px; color: var(--ink-soft); font-size: 13px; line-height: 1.7; }
+.management-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.management-grid > button { min-height: 92px; display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--line); border-radius: 17px; color: var(--ink); background: rgba(255,255,255,.78); cursor: pointer; text-align: left; transition: transform 180ms var(--ease-spring), border-color 180ms, box-shadow 180ms, background-color 180ms; }
+.management-grid > button:hover { transform: translateY(-2px); border-color: rgba(57,124,246,.28); background: white; box-shadow: 0 12px 28px rgba(42,71,105,.09); }
+.management-grid > button:active { transform: scale(.985); }
+.management-entry-icon { width: 46px; height: 46px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 14px; color: var(--primary); background: var(--primary-soft); }
+.management-grid > button > span:last-child { min-width: 0; display: grid; gap: 5px; }.management-grid strong { font-size: 13px; }.management-grid small { color: var(--ink-faint); font-size: 10px; line-height: 1.45; }
+
+@media (max-width: 620px) {
+  .management-scrim { align-items: end; padding: 0; }
+  .management-center { width: 100%; height: min(92dvh, 780px); border-width: 1px 0 0; border-radius: 24px 24px 0 0; }
+  .management-header { min-height: 70px; padding: 10px 14px; }
+  .management-home, .management-content { padding: 18px 14px max(26px, env(safe-area-inset-bottom)); }
+  .management-grid { grid-template-columns: 1fr; gap: 8px; }
+  .management-grid > button { min-height: 76px; padding: 12px; }
+}

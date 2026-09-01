@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { AppShell, type PanelId } from './components/AppShell'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { FormDialog } from './components/FormDialog'
+import { ManagementCenter, type ManagementSection } from './components/ManagementCenter'
 import { PanelDrawer } from './components/PanelDrawer'
 import { ToastRegion, type Notice, type NoticeTone } from './components/ToastRegion'
 import { CharacterPanel } from './features/character/CharacterPanel'
@@ -39,7 +40,7 @@ const noticeId = () => `notice-${Date.now()}-${Math.random().toString(36).slice(
 
 export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
   const chat = useSillytavern()
-  const [activePanel, setActivePanel] = useState<PanelId | null>(null)
+  const [activePanel, setActivePanel] = useState<PanelId | 'home' | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [form, setForm] = useState<FormState | null>(null)
   const [notices, setNotices] = useState<Notice[]>([])
@@ -111,18 +112,22 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
     return { title: '导入并覆盖本地内容？', description: `备份包含 ${backup.characters?.length ?? 0} 张角色卡、${backup.lorebooks?.length ?? 0} 本世界书、${backup.presets?.length ?? 0} 份预设与 ${backup.chats?.length ?? 0} 个会话。现有 API 密钥会保留。`, label: '导入备份' }
   })() : null
 
-  const panel = !activePanel ? null : activePanel === 'character' ? (
-    <PanelDrawer title="角色卡库" eyebrow="Character Library" onClose={() => setActivePanel(null)}><CharacterPanel characters={chat.characters} activeCharacterId={chat.settings?.activeCharacterId ?? null} onSelect={async (id) => { await chat.selectCharacter(id); pushNotice('info', '聊天对象已切换', '请创建新会话以使用这张角色卡。') }} onImport={async (file) => { const character = await chat.importCharacter(file); pushNotice('success', '角色卡已导入', `“${character.name}”已加入本地角色卡库。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-character', item })} onError={fileError} /></PanelDrawer>
+  const panelContent = activePanel === 'character' ? (
+    <CharacterPanel characters={chat.characters} activeCharacterId={chat.settings?.activeCharacterId ?? null} onSelect={async (id) => { await chat.selectCharacter(id); pushNotice('info', '聊天对象已切换', '请创建新会话以使用这张角色卡。') }} onImport={async (file) => { const character = await chat.importCharacter(file); pushNotice('success', '角色卡已导入', `“${character.name}”已加入本地角色卡库。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-character', item })} onError={fileError} />
   ) : activePanel === 'worldbook' ? (
-    <PanelDrawer title="世界书" eyebrow="World Information" onClose={() => setActivePanel(null)}><WorldBookPanel lorebooks={chat.lorebooks} activeIds={chat.settings?.activeLorebookIds ?? []} onToggle={chat.toggleLorebook} onImport={async (book) => { await chat.addLorebook(book); pushNotice('success', '世界书已导入', `“${book.name}”与 ${book.entries.length} 个条目已保存。`) }} onSave={async (book) => { await chat.updateLorebook(book); pushNotice('success', '世界书已保存', `“${book.name}”的规则已更新。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-lorebook', item })} onError={fileError} /></PanelDrawer>
+    <WorldBookPanel lorebooks={chat.lorebooks} activeIds={chat.settings?.activeLorebookIds ?? []} onToggle={chat.toggleLorebook} onImport={async (book) => { await chat.addLorebook(book); pushNotice('success', '世界书已导入', `“${book.name}”与 ${book.entries.length} 个条目已保存。`) }} onSave={async (book) => { await chat.updateLorebook(book); pushNotice('success', '世界书已保存', `“${book.name}”的规则已更新。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-lorebook', item })} onError={fileError} />
   ) : activePanel === 'presets' ? (
-    <PanelDrawer title="对话预设" eyebrow="Response Presets" onClose={() => setActivePanel(null)}><PresetPanel presets={chat.presets} activePresetId={chat.settings?.activePresetId ?? null} onSelect={async (id) => { await chat.selectPreset(id); pushNotice('info', '预设已切换', '下一次生成会使用新的提示词与参数。') }} onImport={async (preset) => { await chat.addPreset(preset); pushNotice('success', '预设已导入', `“${preset.name}”已保存并启用。`) }} onSave={async (preset) => { await chat.updatePreset(preset); pushNotice('success', '预设已保存', `“${preset.name}”将在下一次生成中生效。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-preset', item })} onError={fileError} /></PanelDrawer>
-  ) : activePanel === 'history' ? (
-    <PanelDrawer title="会话历史" eyebrow="Local Sessions" onClose={() => setActivePanel(null)}><HistoryPanel chats={chat.chats} activeChatId={chat.settings?.activeChatId ?? null} onSelect={async (id) => { await chat.selectChat(id); setActivePanel(null) }} onRename={(item) => setForm({ kind: 'rename-chat', item })} onDelete={(item) => setConfirmation({ kind: 'delete-chat', item })} /></PanelDrawer>
+    <PresetPanel presets={chat.presets} activePresetId={chat.settings?.activePresetId ?? null} onSelect={async (id) => { await chat.selectPreset(id); pushNotice('info', '预设已切换', '下一次生成会使用新的提示词与参数。') }} onImport={async (preset) => { await chat.addPreset(preset); pushNotice('success', '预设已导入', `“${preset.name}”已保存并启用。`) }} onSave={async (preset) => { await chat.updatePreset(preset); pushNotice('success', '预设已保存', `“${preset.name}”将在下一次生成中生效。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-preset', item })} onError={fileError} />
   ) : activePanel === 'variables' ? (
-    <PanelDrawer title="会话变量" eyebrow="Runtime Variables" onClose={() => setActivePanel(null)}><VariablesPanel variables={chat.activeChat?.variables ?? {}} disabled={!chat.activeChat} onSave={async (variables) => { await chat.setChatVariables(variables); pushNotice('success', '变量已保存', '新的变量值会在下一轮提示词中生效。') }} /></PanelDrawer>
+    <VariablesPanel variables={chat.activeChat?.variables ?? {}} disabled={!chat.activeChat} onSave={async (variables) => { await chat.setChatVariables(variables); pushNotice('success', '变量已保存', '新的变量值会在下一轮提示词中生效。') }} />
   ) : chat.settings ? (
-    <PanelDrawer title="系统设置" eyebrow="Local Runtime" onClose={() => setActivePanel(null)}><SettingsPanel settings={chat.settings} onUpdate={chat.updateSettings} onNotice={pushNotice} onRequestClear={() => setConfirmation({ kind: 'clear-first' })} onExport={exportBackup} onImport={requestBackupImport} /></PanelDrawer>
+    <SettingsPanel settings={chat.settings} onUpdate={chat.updateSettings} onNotice={pushNotice} onRequestClear={() => setConfirmation({ kind: 'clear-first' })} onExport={exportBackup} onImport={requestBackupImport} />
+  ) : null
+
+  const panel = activePanel === 'history' ? (
+    <PanelDrawer title="会话历史" eyebrow="Local Sessions" onClose={() => setActivePanel(null)}><HistoryPanel chats={chat.chats} activeChatId={chat.settings?.activeChatId ?? null} onSelect={async (id) => { await chat.selectChat(id); setActivePanel(null) }} onRename={(item) => setForm({ kind: 'rename-chat', item })} onDelete={(item) => setConfirmation({ kind: 'delete-chat', item })} /></PanelDrawer>
+  ) : activePanel ? (
+    <ManagementCenter section={activePanel as ManagementSection} onSelectSection={setActivePanel} onClose={() => setActivePanel(null)}>{panelContent}</ManagementCenter>
   ) : null
 
   if (chat.status === 'loading' || !chat.settings) return <main className="boot-screen"><span className="boot-mark" /><h1>正在打开本地聊天空间</h1><p>读取角色卡、世界书、预设与会话索引。</p></main>
@@ -130,7 +135,7 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
 
   return (
     <>
-      <AppShell settings={chat.settings} characters={chat.characters} activeCharacter={chat.activeCharacter} activePreset={chat.activePreset} activeLorebooks={chat.activeLorebooks} activeChat={chat.activeChat} chats={chat.chats} readiness={chat.readiness} generating={chat.generation.status === 'streaming'} onOpenPanel={setActivePanel} onStart={() => void createChat()} onSend={chat.sendGameMessage} onStop={chat.stopGeneration} onRegenerate={chat.regenerateLast} onDeleteRound={() => { const item = chat.activeChat?.messages.findLast((message) => message.role === 'user'); if (item && chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onEditMessage={(item) => setForm({ kind: 'edit-message', item })} onDeleteFromMessage={(item) => { if (chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onBranchMessage={(item) => setForm({ kind: 'branch-message', item })} />
+      <AppShell settings={chat.settings} characters={chat.characters} activeCharacter={chat.activeCharacter} activePreset={chat.activePreset} activeLorebooks={chat.activeLorebooks} activeChat={chat.activeChat} chats={chat.chats} readiness={chat.readiness} generating={chat.generation.status === 'streaming'} onOpenPanel={setActivePanel} onOpenManagement={() => setActivePanel('home')} onStart={() => void createChat()} onSend={chat.sendGameMessage} onStop={chat.stopGeneration} onRegenerate={chat.regenerateLast} onDeleteRound={() => { const item = chat.activeChat?.messages.findLast((message) => message.role === 'user'); if (item && chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onEditMessage={(item) => setForm({ kind: 'edit-message', item })} onDeleteFromMessage={(item) => { if (chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onBranchMessage={(item) => setForm({ kind: 'branch-message', item })} />
       {panel}
       <ToastRegion notices={notices} onDismiss={(id) => setNotices((current) => current.filter((notice) => notice.id !== id))} />
       {confirmation && confirmationCopy && <ConfirmDialog title={confirmationCopy.title} description={confirmationCopy.description} confirmLabel={confirmationCopy.label} onCancel={() => setConfirmation(null)} onConfirm={() => void executeConfirmation()} />}

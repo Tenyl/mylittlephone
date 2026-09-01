@@ -21,6 +21,7 @@ interface AppShellProps {
   readiness: SetupReadiness
   generating: boolean
   onOpenPanel: (panel: PanelId) => void
+  onOpenManagement: () => void
   onStart: () => void
   onSend: (content: string) => boolean | Promise<boolean>
   onStop: () => void
@@ -44,7 +45,7 @@ function CharacterAvatar({ character, size }: { character: CharacterCard; size: 
 }
 
 export function AppShell(props: AppShellProps) {
-  const { settings, characters, activeCharacter, activePreset, activeLorebooks, activeChat, chats, readiness, generating, onOpenPanel, onStart, onSend, onStop, onRegenerate, onDeleteRound, onEditMessage, onDeleteFromMessage, onBranchMessage } = props
+  const { settings, characters, activeCharacter, activePreset, activeLorebooks, activeChat, chats, readiness, generating, onOpenPanel, onOpenManagement, onStart, onSend, onStop, onRegenerate, onDeleteRound, onEditMessage, onDeleteFromMessage, onBranchMessage } = props
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const contextUsed = useMemo(() => activeChat?.messages.reduce((total, message) => total + message.content.length, 0) ?? 0, [activeChat])
   const contextMax = Number(activePreset?.settings.openai_max_context ?? 8192) * 4
@@ -72,7 +73,7 @@ export function AppShell(props: AppShellProps) {
               <Composer characterName={activeCharacter.name} generating={generating} enabledLorebooks={activeLorebooks.length} onSend={onSend} onStop={onStop} onRegenerate={onRegenerate} onDeleteRound={onDeleteRound} />
             </>
           ) : (
-            <div className="setup-column"><button id="setup-mobile-navigation" className="icon-button mobile-only setup-nav-trigger" type="button" aria-label="打开功能导航" onClick={() => setMobileMenuOpen(true)}><GearSix size={21} /></button><SetupGuide readiness={readiness} onOpenCharacter={() => onOpenPanel('character')} onOpenPreset={() => onOpenPanel('presets')} onOpenSettings={() => onOpenPanel('settings')} onOpenLorebooks={() => onOpenPanel('worldbook')} onStart={onStart} /></div>
+            <div className="setup-column"><button id="setup-open-management" className="icon-button setup-nav-trigger" type="button" aria-label="打开管理中心" onClick={onOpenManagement}><GearSix size={21} /></button><SetupGuide readiness={readiness} onOpenCharacter={() => onOpenPanel('character')} onOpenPreset={() => onOpenPanel('presets')} onOpenSettings={() => onOpenPanel('settings')} onOpenLorebooks={() => onOpenPanel('worldbook')} onStart={onStart} /></div>
           )}
         </main>
 

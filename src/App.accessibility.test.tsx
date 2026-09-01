@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from './App'
@@ -10,30 +10,32 @@ describe('accessibility contracts', () => {
     await clearAllData()
   })
 
-  it('closes a panel with Escape and restores focus to its trigger', async () => {
+  it('closes the management center with Escape and restores focus to the gear', async () => {
     const user = userEvent.setup()
     render(<App />)
-    const trigger = await screen.findByRole('button', { name: '角色卡' })
+    const trigger = await screen.findByRole('button', { name: '打开管理中心' })
     await user.click(trigger)
 
-    expect(screen.getByRole('dialog', { name: '角色卡库' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: '管理中心' })).toBeInTheDocument()
     await user.keyboard('{Escape}')
 
-    expect(screen.queryByRole('dialog', { name: '角色卡库' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: '管理中心' })).not.toBeInTheDocument()
     expect(trigger).toHaveFocus()
   })
 
-  it('exposes every configuration area through the mobile navigation', async () => {
-    const { container } = render(<App />)
+  it('exposes every configuration area through one management center', async () => {
+    const user = userEvent.setup()
+    render(<App />)
     await screen.findByRole('heading', { name: '从一张角色卡开始' })
-    fireEvent.click(container.querySelector('#setup-mobile-navigation')!)
+    await user.click(screen.getByRole('button', { name: '打开管理中心' }))
 
-    const navigation = screen.getByRole('dialog', { name: '功能导航' })
-    expect(within(navigation).getByRole('button', { name: /角色卡/ })).toBeInTheDocument()
-    expect(within(navigation).getByRole('button', { name: /世界书/ })).toBeInTheDocument()
-    expect(within(navigation).getByRole('button', { name: /对话预设/ })).toBeInTheDocument()
-    expect(within(navigation).getByRole('button', { name: /会话历史/ })).toBeInTheDocument()
-    expect(within(navigation).getByRole('button', { name: /系统设置/ })).toBeInTheDocument()
+    const center = screen.getByRole('dialog', { name: '管理中心' })
+    expect(within(center).getByRole('button', { name: /角色卡/ })).toBeInTheDocument()
+    expect(within(center).getByRole('button', { name: /世界书/ })).toBeInTheDocument()
+    expect(within(center).getByRole('button', { name: /对话预设/ })).toBeInTheDocument()
+    expect(within(center).getByRole('button', { name: /API 与设置/ })).toBeInTheDocument()
+    expect(within(center).getByRole('button', { name: /会话变量/ })).toBeInTheDocument()
+    expect(within(center).getByRole('button', { name: /本地数据/ })).toBeInTheDocument()
   })
 
   it('provides a polite live region and unique ids for interactive controls', async () => {
@@ -54,12 +56,12 @@ describe('accessibility contracts', () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(await screen.findByRole('button', { name: '系统设置' }))
-    const close = screen.getByRole('button', { name: '关闭系统设置' })
+    const first = screen.getByRole('button', { name: '返回管理中心' })
     const last = screen.getByRole('button', { name: '测试连接' })
 
     last.focus()
     await user.tab()
-    expect(close).toHaveFocus()
+    expect(first).toHaveFocus()
 
     await user.tab({ shift: true })
     expect(last).toHaveFocus()
