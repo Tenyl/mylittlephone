@@ -99,6 +99,15 @@ describe('SillyTavern character chat app', () => {
     render(<App bundledDefaultsLoader={bundledDefaultsLoader} />)
     const composer = await screen.findByLabelText('输入聊天消息')
 
+    await user.click(screen.getByRole('button', { name: '打开管理中心' }))
+    await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /当前聊天/ }))
+    const nickname = screen.getByLabelText('角色备注名')
+    await user.clear(nickname)
+    await user.type(nickname, '小迷')
+    await user.click(screen.getByRole('button', { name: '保存当前聊天资料' }))
+    await user.click(screen.getByRole('button', { name: '关闭当前聊天' }))
+    expect(await screen.findByRole('heading', { name: '小迷', level: 1 })).toBeInTheDocument()
+
     await user.type(composer, '你好{Enter}')
 
     expect(await screen.findByText('我在，博士。')).toBeInTheDocument()
@@ -108,6 +117,7 @@ describe('SillyTavern character chat app', () => {
     const bodyText = String(init?.body)
     const body = JSON.parse(bodyText)
     expect(body.characterId).toBe(BUNDLED_CHARACTER_ID)
+    expect(body.characterName).toBe('迷迭香')
     expect(body.character).toBeUndefined()
     expect(body.preset.name).toBe('默认预设')
     expect(bodyText).not.toContain('test-key')

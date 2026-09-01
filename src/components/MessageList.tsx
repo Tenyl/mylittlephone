@@ -1,29 +1,36 @@
 import { ArrowClockwise, ArrowDown, Check, Copy, DotsThree, GitBranch, PencilSimple, Trash, UserCircle } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
-import type { CharacterCard, ChatMessage } from '../sillytavern/types'
+import type { ChatMessage } from '../sillytavern/types'
+import type { ResolvedChatProfile } from '../sillytavern/chat-profile'
 
 const WINDOW_SIZE = 100
 const timeLabel = (timestamp: number) => new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(timestamp)
 
 interface MessageListProps {
   messages: ChatMessage[]
-  character: CharacterCard
+  profile: ResolvedChatProfile
   onEdit: (message: ChatMessage) => void
   onDeleteFrom: (message: ChatMessage) => void
   onBranch: (message: ChatMessage) => void
   onRegenerate: () => void | Promise<unknown>
 }
 
-function TypingIndicator({ character }: { character: CharacterCard }) {
+function TypingIndicator({ characterName }: { characterName: string }) {
   return (
-    <div className="message-bubble typing-indicator" role="status" aria-label={`${character.name}正在输入`}>
+    <div className="message-bubble typing-indicator" role="status" aria-label={`${characterName}正在输入`}>
       <span className="typing-bubble" aria-hidden="true"><i /><i /><i /></span>
       <span>对方正在输入</span>
     </div>
   )
 }
 
-export function MessageList({ messages, character, onEdit, onDeleteFrom, onBranch, onRegenerate }: MessageListProps) {
+function MessageAvatar({ name, avatar }: { name: string; avatar: string }) {
+  return avatar
+    ? <img src={avatar} alt={`${name}的头像`} width="36" height="36" />
+    : <span className="message-avatar-fallback" aria-hidden="true"><UserCircle size={24} /></span>
+}
+
+export function MessageList({ messages, profile, onEdit, onDeleteFrom, onBranch, onRegenerate }: MessageListProps) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const [awayFromBottom, setAwayFromBottom] = useState(false)
@@ -50,11 +57,11 @@ export function MessageList({ messages, character, onEdit, onDeleteFrom, onBranc
           const streaming = assistant && message.status === 'streaming'
           const menuId = `message-actions-menu-${message.id}`
           return (
-            <article key={message.id} data-message-id={message.id} className={`message-row ${message.role} ${compact ? 'compact' : ''}`} aria-label={message.role === 'user' ? '你的消息' : `${character.name}的消息`}>
-              {assistant && !compact ? (character.avatar ? <img src={character.avatar} alt="" width="36" height="36" /> : <span className="message-avatar-fallback"><UserCircle size={24} /></span>) : <span className="avatar-space" />}
+            <article key={message.id} data-message-id={message.id} className={`message-row ${message.role} ${compact ? 'compact' : ''}`} aria-label={`${message.role === 'user' ? profile.userName : profile.characterName}的消息`}>
+              {assistant && (compact ? <span className="avatar-space" /> : <MessageAvatar name={profile.characterName} avatar={profile.characterAvatar} />)}
               <div className="message-stack">
-                {!compact && <span className="message-meta">{message.role === 'user' ? '你' : character.name} · {timeLabel(message.timestamp)}</span>}
-                {streaming ? <TypingIndicator character={character} /> : <div className="message-bubble"><span className="message-text">{message.content || message.parsed?.maintext}</span></div>}
+                {!compact && <span className="message-meta">{message.role === 'user' ? profile.userName : profile.characterName} · {timeLabel(message.timestamp)}</span>}
+                {streaming ? <TypingIndicator characterName={profile.characterName} /> : <div className="message-bubble"><span className="message-text">{message.content || message.parsed?.maintext}</span></div>}
                 {!streaming && message.role === 'user' && <span className="message-check" aria-label="已发送"><Check size={12} weight="bold" /></span>}
                 {!streaming && (
                   <div className="message-action-wrap">
@@ -70,6 +77,7 @@ export function MessageList({ messages, character, onEdit, onDeleteFrom, onBranc
                   </div>
                 )}
               </div>
+              {!assistant && (compact ? <span className="avatar-space" /> : <MessageAvatar name={profile.userName} avatar={profile.userAvatar} />)}
             </article>
           )
         })}

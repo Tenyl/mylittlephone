@@ -1,6 +1,7 @@
 import { GearSix } from '@phosphor-icons/react'
-import type { CharacterCard, ChatMessage, ChatSession } from '../sillytavern/types'
+import type { AppSettings, CharacterCard, ChatMessage, ChatSession } from '../sillytavern/types'
 import type { SetupReadiness } from '../sillytavern/readiness'
+import { resolveChatProfile } from '../sillytavern/chat-profile'
 import { SetupGuide } from '../features/onboarding/SetupGuide'
 import { ChatHeader } from './ChatHeader'
 import { Composer } from './Composer'
@@ -11,6 +12,7 @@ export type PanelId = 'chat-profile' | 'character' | 'worldbook' | 'presets' | '
 interface AppShellProps {
   activeCharacter: CharacterCard | null
   activeChat: ChatSession | null
+  settings: AppSettings
   readiness: SetupReadiness
   generating: boolean
   onOpenPanel: (panel: PanelId) => void
@@ -26,20 +28,23 @@ interface AppShellProps {
 
 export function AppShell(props: AppShellProps) {
   const {
-    activeCharacter, activeChat, readiness, generating,
+    activeCharacter, activeChat, settings, readiness, generating,
     onOpenPanel, onOpenManagement, onStart, onSend, onStop, onRegenerate,
     onEditMessage, onDeleteFromMessage, onBranchMessage,
   } = props
+  const profile = activeCharacter && activeChat
+    ? resolveChatProfile(activeCharacter, activeChat, settings)
+    : null
 
   return (
     <div className="app-stage">
       <div id="immersive-chat-shell" className="app-window immersive-chat-shell">
         <main className="chat-column">
-          {activeChat && activeCharacter ? (
+          {activeChat && activeCharacter && profile ? (
             <>
-              <ChatHeader character={activeCharacter} chat={activeChat} generating={generating} onOpenHistory={() => onOpenPanel('history')} onOpenManagement={onOpenManagement} />
-              <MessageList messages={activeChat.messages} character={activeCharacter} onEdit={onEditMessage} onDeleteFrom={onDeleteFromMessage} onBranch={onBranchMessage} onRegenerate={onRegenerate} />
-              <Composer characterName={activeCharacter.name} generating={generating} onSend={onSend} onStop={onStop} />
+              <ChatHeader profile={profile} chat={activeChat} generating={generating} onOpenHistory={() => onOpenPanel('history')} onOpenManagement={onOpenManagement} />
+              <MessageList messages={activeChat.messages} profile={profile} onEdit={onEditMessage} onDeleteFrom={onDeleteFromMessage} onBranch={onBranchMessage} onRegenerate={onRegenerate} />
+              <Composer characterName={profile.characterName} generating={generating} onSend={onSend} onStop={onStop} />
             </>
           ) : (
             <div className="setup-column">
