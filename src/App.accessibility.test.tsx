@@ -72,7 +72,7 @@ describe('accessibility contracts', () => {
     await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
     await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /API 与设置/ }))
     const first = screen.getByRole('button', { name: '返回管理中心' })
-    const last = screen.getByRole('button', { name: '测试连接' })
+    const last = screen.getByRole('radio', { name: /自定义 API/ })
 
     last.focus()
     await user.tab()

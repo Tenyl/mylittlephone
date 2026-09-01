@@ -4,8 +4,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { getEmptyFirstSettings } from '../../sillytavern/database'
 import { SettingsPanel } from './SettingsPanel'
 
-function renderSettings() {
+function renderSettings(apiSource: 'managed' | 'custom' = 'custom') {
   const settings = getEmptyFirstSettings()
+  settings.apiSource = apiSource
   settings.apiMode = 'dual'
   settings.api = {
     ...settings.api,
@@ -18,6 +19,23 @@ function renderSettings() {
 }
 
 describe('SillyTavern settings panel', () => {
+  it('hides all provider configuration in managed mode and offers an explicit custom mode switch', async () => {
+    const user = userEvent.setup()
+    const props = renderSettings('managed')
+
+    expect(screen.getByText('由站点安全提供')).toBeInTheDocument()
+    expect(screen.queryByLabelText('API Key')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Base URL')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('模型')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: /自定义 API/ }))
+    expect(props.onUpdate).toHaveBeenCalledWith({ apiSource: 'custom' })
+
+    await user.click(screen.getByRole('button', { name: '次 API' }))
+    expect(screen.getByText('托管模式不需要配置次 API')).toBeInTheDocument()
+    expect(screen.queryByLabelText('次 API 温度')).not.toBeInTheDocument()
+  })
+
   it('masks API secrets and exposes complete primary and secondary configuration', async () => {
     const user = userEvent.setup()
     renderSettings()

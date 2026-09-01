@@ -18,7 +18,7 @@ describe('setup readiness', () => {
     expect(readiness.canStartChat).toBe(false)
     expect(readiness.canSend).toBe(false)
     expect(readiness.steps.character.status).toBe('missing')
-    expect(readiness.steps.primaryApi.status).toBe('missing')
+    expect(readiness.steps.primaryApi.status).toBe('complete')
   })
 
   it('reports secondary API separately in dual mode', () => {
@@ -29,6 +29,7 @@ describe('setup readiness', () => {
       hasActiveChat: true,
       settings: {
         ...DEFAULT_SETTINGS,
+        apiSource: 'custom',
         apiMode: 'dual',
         api: { ...DEFAULT_SETTINGS.api, baseUrl: 'https://example.test/v1', apiKey: 'secret', model: 'model', secondary: undefined },
       },
@@ -39,7 +40,7 @@ describe('setup readiness', () => {
     expect(readiness.steps.worldbook.status).toBe('optional')
   })
 
-  it('allows opening a chat with a character and preset before the API is configured', () => {
+  it('allows immediate sending in managed mode without browser API credentials', () => {
     const readiness = getSetupReadiness({
       character,
       preset,
@@ -49,8 +50,23 @@ describe('setup readiness', () => {
     })
 
     expect(readiness.canStartChat).toBe(true)
+    expect(readiness.canSend).toBe(true)
+    expect(readiness.missingReasons).toEqual([])
+    expect(readiness.steps.primaryApi.detail).toBe('使用站点托管聊天服务')
+  })
+
+  it('still requires complete browser credentials in custom API mode', () => {
+    const readiness = getSetupReadiness({
+      character,
+      preset,
+      lorebookCount: 0,
+      hasActiveChat: true,
+      settings: { ...DEFAULT_SETTINGS, apiSource: 'custom' } as typeof DEFAULT_SETTINGS,
+    })
+
     expect(readiness.canSend).toBe(false)
     expect(readiness.missingReasons).toEqual(['请完整配置主 API 地址、密钥与模型'])
+    expect(readiness.steps.primaryApi.status).toBe('missing')
   })
 
   it('allows chat when required content and primary API are ready', () => {

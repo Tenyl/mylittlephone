@@ -45,6 +45,7 @@ async function seedReadyChat() {
   }
   await Promise.all([saveCharacter(character), savePreset(preset), saveChat(chat)])
   const settings = getEmptyFirstSettings()
+  settings.apiSource = 'custom'
   settings.apiMode = 'single'
   settings.api = { ...settings.api, baseUrl: 'https://api.example.test/v1', apiKey: 'test-key', model: 'test-model' }
   settings.activeCharacterId = character.id
@@ -76,6 +77,7 @@ function sseResponse(chunks: string[], delayMs = 0) {
 describe('SillyTavern character chat app', () => {
   beforeEach(async () => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
     localStorage.clear()
     await clearAllData()
   })
@@ -90,17 +92,26 @@ describe('SillyTavern character chat app', () => {
     expect(await getSettings()).toMatchObject({ api: { baseUrl: '', apiKey: '', model: '' } })
   })
 
-  it('keeps the draft and points to settings when sending before API configuration', async () => {
+  it('sends immediately through the managed endpoint without exposing the built-in character card', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => sseResponse(['<maintext>我在，博士。</maintext>']))
+    vi.stubGlobal('fetch', fetchMock)
     const user = userEvent.setup()
     render(<App bundledDefaultsLoader={bundledDefaultsLoader} />)
     const composer = await screen.findByLabelText('输入聊天消息')
 
     await user.type(composer, '你好{Enter}')
 
-    expect(await screen.findByText('还不能发送消息')).toBeInTheDocument()
-    expect(screen.getByText('请打开右上角齿轮，在“主 API”中填写地址、密钥和模型。')).toBeInTheDocument()
-    expect(composer).toHaveValue('你好')
-    expect(within(screen.getByLabelText('聊天记录')).queryByText('你好')).not.toBeInTheDocument()
+    expect(await screen.findByText('我在，博士。')).toBeInTheDocument()
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/chat')
+    expect(init).toBeDefined()
+    const bodyText = String(init?.body)
+    const body = JSON.parse(bodyText)
+    expect(body.characterId).toBe(BUNDLED_CHARACTER_ID)
+    expect(body.character).toBeUndefined()
+    expect(body.preset.name).toBe('默认预设')
+    expect(bodyText).not.toContain('test-key')
+    expect(bodyText).not.toContain('test-model')
   })
 
   it('uses one immersive full-window chat shell without permanent side rails', async () => {

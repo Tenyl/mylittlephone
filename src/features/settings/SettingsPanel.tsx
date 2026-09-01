@@ -1,4 +1,4 @@
-import { Eye, EyeSlash, FloppyDisk, PlugsConnected, SlidersHorizontal, Trash, Wrench, X } from '@phosphor-icons/react'
+import { CloudCheck, Eye, EyeSlash, FloppyDisk, PlugsConnected, SlidersHorizontal, Trash, UserGear, Wrench, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { fetchModels, testConnection } from '../../sillytavern/api-tools'
 import { DEFAULT_FORMAT_PROMPT, type AppSettings } from '../../sillytavern/types'
@@ -57,24 +57,41 @@ export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, on
 
       {tab === 'primary' && (
         <section className="settings-section" aria-labelledby="primary-api-heading">
-          <div className="settings-heading"><span><PlugsConnected size={22} /></span><div><h3 id="primary-api-heading">主 API</h3><p>负责角色回复与剧情正文，必须完整配置后才能开始聊天。</p></div></div>
-          <label htmlFor="primary-api-base-url">Base URL</label><input id="primary-api-base-url" value={settings.api.baseUrl} onChange={(event) => void updateApi({ baseUrl: event.target.value })} autoComplete="url" />
-          <label htmlFor="primary-api-key">API Key</label><div className="password-field"><input id="primary-api-key" type={showPrimaryKey ? 'text' : 'password'} value={settings.api.apiKey} onChange={(event) => void updateApi({ apiKey: event.target.value })} autoComplete="off" /><button id="primary-api-key-visibility" type="button" aria-label={showPrimaryKey ? '隐藏主 API 密钥' : '显示主 API 密钥'} aria-pressed={showPrimaryKey} onClick={() => setShowPrimaryKey((value) => !value)}>{showPrimaryKey ? <EyeSlash size={18} /> : <Eye size={18} />}</button></div>
-          <label htmlFor="primary-api-model">模型</label><input id="primary-api-model" list="primary-model-options" value={settings.api.model} onChange={(event) => void updateApi({ model: event.target.value })} /><datalist id="primary-model-options">{primaryModels.map((model) => <option key={model} value={model} />)}</datalist>
-          <p className="field-helper">密钥只保存在当前浏览器；请求会直接发送到此端点。</p>
-          <div className="settings-actions"><button id="primary-fetch-models" type="button" disabled={Boolean(busy)} onClick={() => void loadModels('primary')}>{busy === 'models-primary' ? '获取中…' : '获取模型'}</button><button id="primary-test-connection" className="primary" type="button" disabled={Boolean(busy)} onClick={() => void checkConnection('primary')}>{busy === 'test-primary' ? '测试中…' : '测试连接'}</button></div>
+          <div className="settings-heading"><span><PlugsConnected size={22} /></span><div><h3 id="primary-api-heading">聊天服务</h3><p>选择站点提供的默认服务，或连接你自己的 OpenAI 兼容 API。</p></div></div>
+          <fieldset className="api-source-choice">
+            <legend>连接方式</legend>
+            <label htmlFor="api-source-managed"><span><CloudCheck size={20} /><span><strong>站点托管</strong><small>无需填写模型信息，打开即可聊天</small></span></span><input id="api-source-managed" type="radio" name="api-source" checked={settings.apiSource === 'managed'} onChange={() => void onUpdate({ apiSource: 'managed' })} /></label>
+            <label htmlFor="api-source-custom"><span><UserGear size={20} /><span><strong>自定义 API</strong><small>使用只保存在此浏览器的个人配置</small></span></span><input id="api-source-custom" type="radio" name="api-source" checked={settings.apiSource === 'custom'} onChange={() => void onUpdate({ apiSource: 'custom' })} /></label>
+          </fieldset>
+          {settings.apiSource === 'managed' ? (
+            <div className="managed-service-card" role="status"><CloudCheck size={24} weight="duotone" /><div><strong>由站点安全提供</strong><span>API 地址、密钥、模型与默认角色设定均由服务端维护；当前预设仍可由你自由编辑。</span></div></div>
+          ) : (
+            <>
+              <label htmlFor="primary-api-base-url">Base URL</label><input id="primary-api-base-url" value={settings.api.baseUrl} onChange={(event) => void updateApi({ baseUrl: event.target.value })} autoComplete="url" />
+              <label htmlFor="primary-api-key">API Key</label><div className="password-field"><input id="primary-api-key" type={showPrimaryKey ? 'text' : 'password'} value={settings.api.apiKey} onChange={(event) => void updateApi({ apiKey: event.target.value })} autoComplete="off" /><button id="primary-api-key-visibility" type="button" aria-label={showPrimaryKey ? '隐藏主 API 密钥' : '显示主 API 密钥'} aria-pressed={showPrimaryKey} onClick={() => setShowPrimaryKey((value) => !value)}>{showPrimaryKey ? <EyeSlash size={18} /> : <Eye size={18} />}</button></div>
+              <label htmlFor="primary-api-model">模型</label><input id="primary-api-model" list="primary-model-options" value={settings.api.model} onChange={(event) => void updateApi({ model: event.target.value })} /><datalist id="primary-model-options">{primaryModels.map((model) => <option key={model} value={model} />)}</datalist>
+              <p className="field-helper">密钥只保存在当前浏览器；请求会直接发送到此端点。</p>
+              <div className="settings-actions"><button id="primary-fetch-models" type="button" disabled={Boolean(busy)} onClick={() => void loadModels('primary')}>{busy === 'models-primary' ? '获取中…' : '获取模型'}</button><button id="primary-test-connection" className="primary" type="button" disabled={Boolean(busy)} onClick={() => void checkConnection('primary')}>{busy === 'test-primary' ? '测试中…' : '测试连接'}</button></div>
+            </>
+          )}
         </section>
       )}
 
       {tab === 'secondary' && (
         <section className="settings-section" aria-labelledby="secondary-api-heading">
           <div className="settings-heading"><span><Wrench size={22} /></span><div><h3 id="secondary-api-heading">次 API</h3><p>用于变量与总结任务；失败时自动回退到主 API。</p></div></div>
-          <label className="toggle-row"><span><strong>启用双 API</strong><small>主模型负责叙事，次模型处理结构化任务。</small></span><input id="secondary-api-enabled" type="checkbox" checked={settings.apiMode === 'dual'} onChange={(event) => void onUpdate({ apiMode: event.target.checked ? 'dual' : 'single' })} /></label>
-          <label htmlFor="secondary-api-base-url">Base URL</label><input id="secondary-api-base-url" value={secondary.baseUrl} onChange={(event) => void updateSecondary({ baseUrl: event.target.value, enabled: true })} />
-          <label htmlFor="secondary-api-key">API Key</label><div className="password-field"><input id="secondary-api-key" type={showSecondaryKey ? 'text' : 'password'} value={secondary.apiKey} onChange={(event) => void updateSecondary({ apiKey: event.target.value, enabled: true })} autoComplete="off" /><button id="secondary-api-key-visibility" type="button" aria-label={showSecondaryKey ? '隐藏次 API 密钥' : '显示次 API 密钥'} aria-pressed={showSecondaryKey} onClick={() => setShowSecondaryKey((value) => !value)}>{showSecondaryKey ? <EyeSlash size={18} /> : <Eye size={18} />}</button></div>
-          <label htmlFor="secondary-api-model">模型</label><input id="secondary-api-model" list="secondary-model-options" value={secondary.model} onChange={(event) => void updateSecondary({ model: event.target.value, enabled: true })} /><datalist id="secondary-model-options">{secondaryModels.map((model) => <option key={model} value={model} />)}</datalist>
-          <div className="settings-field-pair"><label htmlFor="secondary-api-temperature">次 API 温度<input id="secondary-api-temperature" type="number" min="0" max="2" step="0.01" value={secondary.temperature ?? 0.7} onChange={(event) => void updateSecondary({ temperature: Math.min(2, Math.max(0, Number(event.target.value) || 0)), enabled: true })} /></label><label htmlFor="secondary-api-max-tokens">次 API 最大输出 Token<input id="secondary-api-max-tokens" type="number" min="1" step="1" value={secondary.maxTokens ?? 8000} onChange={(event) => void updateSecondary({ maxTokens: Math.max(1, Number(event.target.value) || 1), enabled: true })} /></label></div>
-          <div className="settings-actions"><button id="secondary-fetch-models" type="button" disabled={Boolean(busy)} onClick={() => void loadModels('secondary')}>{busy === 'models-secondary' ? '获取中…' : '获取模型'}</button><button id="secondary-test-connection" className="primary" type="button" disabled={Boolean(busy)} onClick={() => void checkConnection('secondary')}>{busy === 'test-secondary' ? '测试中…' : '测试连接'}</button></div>
+          {settings.apiSource === 'managed' ? (
+            <div className="managed-service-card"><CloudCheck size={24} weight="duotone" /><div><strong>托管模式不需要配置次 API</strong><span>站点服务会统一完成聊天请求；切换到“自定义 API”后可启用双 API。</span></div></div>
+          ) : (
+            <>
+              <label className="toggle-row"><span><strong>启用双 API</strong><small>主模型负责叙事，次模型处理结构化任务。</small></span><input id="secondary-api-enabled" type="checkbox" checked={settings.apiMode === 'dual'} onChange={(event) => void onUpdate({ apiMode: event.target.checked ? 'dual' : 'single' })} /></label>
+              <label htmlFor="secondary-api-base-url">Base URL</label><input id="secondary-api-base-url" value={secondary.baseUrl} onChange={(event) => void updateSecondary({ baseUrl: event.target.value, enabled: true })} />
+              <label htmlFor="secondary-api-key">API Key</label><div className="password-field"><input id="secondary-api-key" type={showSecondaryKey ? 'text' : 'password'} value={secondary.apiKey} onChange={(event) => void updateSecondary({ apiKey: event.target.value, enabled: true })} autoComplete="off" /><button id="secondary-api-key-visibility" type="button" aria-label={showSecondaryKey ? '隐藏次 API 密钥' : '显示次 API 密钥'} aria-pressed={showSecondaryKey} onClick={() => setShowSecondaryKey((value) => !value)}>{showSecondaryKey ? <EyeSlash size={18} /> : <Eye size={18} />}</button></div>
+              <label htmlFor="secondary-api-model">模型</label><input id="secondary-api-model" list="secondary-model-options" value={secondary.model} onChange={(event) => void updateSecondary({ model: event.target.value, enabled: true })} /><datalist id="secondary-model-options">{secondaryModels.map((model) => <option key={model} value={model} />)}</datalist>
+              <div className="settings-field-pair"><label htmlFor="secondary-api-temperature">次 API 温度<input id="secondary-api-temperature" type="number" min="0" max="2" step="0.01" value={secondary.temperature ?? 0.7} onChange={(event) => void updateSecondary({ temperature: Math.min(2, Math.max(0, Number(event.target.value) || 0)), enabled: true })} /></label><label htmlFor="secondary-api-max-tokens">次 API 最大输出 Token<input id="secondary-api-max-tokens" type="number" min="1" step="1" value={secondary.maxTokens ?? 8000} onChange={(event) => void updateSecondary({ maxTokens: Math.max(1, Number(event.target.value) || 1), enabled: true })} /></label></div>
+              <div className="settings-actions"><button id="secondary-fetch-models" type="button" disabled={Boolean(busy)} onClick={() => void loadModels('secondary')}>{busy === 'models-secondary' ? '获取中…' : '获取模型'}</button><button id="secondary-test-connection" className="primary" type="button" disabled={Boolean(busy)} onClick={() => void checkConnection('secondary')}>{busy === 'test-secondary' ? '测试中…' : '测试连接'}</button></div>
+            </>
+          )}
         </section>
       )}
 

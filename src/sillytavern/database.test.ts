@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
-import { clearAllData, exportAllData, getDatabase, getEmptyFirstSettings, importAllData, initializeDatabase, saveSettings } from './database'
+import { clearAllData, exportAllData, getDatabase, getEmptyFirstSettings, importAllData, initializeDatabase, resolveApiSource, saveSettings } from './database'
 
 describe('empty-first database initialization', () => {
   afterEach(async () => {
@@ -18,6 +18,7 @@ describe('empty-first database initialization', () => {
 
     const settings = await db.settings.get('settings')
     expect(settings).toMatchObject({
+      apiSource: 'managed',
       apiMode: 'single',
       activeCharacterId: null,
       activePresetId: null,
@@ -30,6 +31,19 @@ describe('empty-first database initialization', () => {
     expect(settings?.api.apiKey).toBe('')
     expect(settings?.api.model).toBe('')
     expect(settings?.api.secondary).toMatchObject({ enabled: false, baseUrl: '', apiKey: '', model: '' })
+  })
+
+  it('migrates legacy complete local credentials to custom mode and blank settings to managed mode', () => {
+    expect(resolveApiSource({
+      api: { baseUrl: 'https://api.example/v1', apiKey: 'secret', model: 'model', timeout: 60_000 },
+    })).toBe('custom')
+    expect(resolveApiSource({
+      api: { baseUrl: '', apiKey: '', model: '', timeout: 60_000 },
+    })).toBe('managed')
+    expect(resolveApiSource({
+      apiSource: 'managed',
+      api: { baseUrl: 'https://kept.example/v1', apiKey: 'kept', model: 'kept', timeout: 60_000 },
+    })).toBe('managed')
   })
 
   it('strips API keys from exports and preserves current keys during import', async () => {

@@ -63,6 +63,7 @@ async function prepareController(result: { current: ReturnType<typeof useSillyta
   await act(async () => result.current.addCharacter(character))
   await act(async () => result.current.addPreset(preset))
   await act(async () => result.current.updateSettings({
+    apiSource: 'custom',
     api: {
       ...result.current.settings!.api,
       baseUrl: 'https://api.example.test/v1',
@@ -94,7 +95,8 @@ describe('useSillytavern controller', () => {
     expect(result.current.activeChat?.messages[0]?.content).toBe('嗯...我在。')
     expect(result.current.settings?.api).toMatchObject({ baseUrl: '', apiKey: '', model: '' })
     expect(result.current.readiness.canStartChat).toBe(true)
-    expect(result.current.readiness.canSend).toBe(false)
+    expect(result.current.settings?.apiSource).toBe('managed')
+    expect(result.current.readiness.canSend).toBe(true)
   })
 
   it('persists active imports and a newly created chat across remounts', async () => {
@@ -120,6 +122,7 @@ describe('useSillytavern controller', () => {
       'data: {"choices":[{"delta":{"content":"好。</maintext><option>继续</option><sum>问候</sum>"}}]}',
       '',
       'data: [DONE]',
+      '',
       '',
     ].join('\n')
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body, {

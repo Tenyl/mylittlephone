@@ -14,9 +14,10 @@ import {
 import { importPreset } from './importer'
 import { replaceMacros } from './prompt-assembler'
 import type { CharacterCard, ChatPreset, ChatSession } from './types'
+import { BUNDLED_CHARACTER_ID } from './managed-api'
 
-export const BUNDLED_CHARACTER_ID = 'builtin-character-rosmontis'
-export const BUNDLED_CHARACTER_VERSION = 2
+export { BUNDLED_CHARACTER_ID } from './managed-api'
+export const BUNDLED_CHARACTER_VERSION = 3
 export const BUNDLED_PRESET_ID = 'builtin-preset-default'
 export const BUNDLED_CHAT_ID = 'builtin-chat-rosmontis'
 
@@ -104,26 +105,11 @@ export async function seedBundledDefaults(loader: BundledDefaultsLoader = loadBu
   }
   const nextSettings = {
     ...settings,
-    apiMode: 'single' as const,
     activeCharacterId: character.id,
     activePresetId: preset.id,
     activeLorebookIds: [],
     activeChatId: chat.id,
     characterName: character.name,
-    api: {
-      ...settings.api,
-      baseUrl: '',
-      apiKey: '',
-      model: '',
-      secondary: {
-        enabled: false,
-        baseUrl: '',
-        apiKey: '',
-        model: '',
-        temperature: settings.api.secondary?.temperature,
-        maxTokens: settings.api.secondary?.maxTokens,
-      },
-    },
   }
 
   await Promise.all([

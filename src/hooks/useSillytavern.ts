@@ -32,6 +32,7 @@ import {
   saveLorebook,
   savePreset,
   saveSettings,
+  resolveApiSource,
 } from '../sillytavern/database';
 import { createDefaultLorebook } from '../sillytavern/editor-utils';
 import { importCharacterFile } from '../sillytavern/character-importer';
@@ -41,6 +42,7 @@ import { getSetupReadiness } from '../sillytavern/readiness';
 import { applyParsedToChat, extractVariables, mergeVariables } from '../sillytavern/variables';
 import { removeLegacyDemoState } from '../sillytavern/legacy-cleanup';
 import { loadBundledDefaults, seedBundledDefaults, type BundledDefaultsLoader } from '../sillytavern/default-content';
+import { BUNDLED_CHARACTER_ID, MANAGED_CHAT_VERSION, toManagedCharacterPayload, type ManagedChatRequest } from '../sillytavern/managed-api';
 
 type ControllerStatus = 'loading' | 'ready' | 'error';
 type GenerationStatus = 'idle' | 'streaming' | 'error';
@@ -58,6 +60,7 @@ function mergeStoredSettings(stored?: AppSettings): AppSettings {
     ...empty,
     ...stored,
     key: 'settings',
+    apiSource: resolveApiSource(stored),
     api: {
       ...empty.api,
       ...stored.api,
@@ -138,7 +141,7 @@ export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = lo
   );
 
   const parser = useStreamParser(settings?.customTags ?? [...DEFAULT_TAGS], [...DEFAULT_OPAQUE_TAGS]);
-  const router = useApiRouter(settings?.api ?? DEFAULT_SETTINGS.api);
+  const router = useApiRouter(settings ?? DEFAULT_SETTINGS);
 
   useEffect(() => {
     let cancelled = false;
@@ -430,15 +433,41 @@ export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = lo
     let raw = '';
     parser.start();
     try {
-      const apiUsed = await router.sendStream({
-        task: 'story',
-        messages: assembled.messages,
-        generationOptions: buildPresetGenerationOptions(activePreset.settings),
-        onChunk: (delta) => {
-          raw += delta;
-          parser.feed(delta);
-        },
-      });
+      const onChunk = (delta: string) => {
+        raw += delta;
+        parser.feed(delta);
+      };
+      const apiUsed = settings.apiSource === 'managed'
+        ? await router.sendStream({
+            mode: 'managed',
+            request: {
+              version: MANAGED_CHAT_VERSION,
+              characterId: activeCharacter.id,
+              characterName: activeCharacter.name,
+              ...(activeCharacter.id === BUNDLED_CHARACTER_ID ? {} : { character: toManagedCharacterPayload(activeCharacter) }),
+              userName: settings.userName,
+              userInput: trimmed,
+              history: baseChat.messages.map((message) => ({
+                id: message.id,
+                role: message.role,
+                content: message.content,
+                timestamp: message.timestamp,
+                status: 'sent',
+              })),
+              preset: activePreset,
+              lorebooks: lorebooks.filter((book) => baseChat.lorebookIds.includes(book.id)),
+              variables: baseChat.variables,
+              formatPrompt: settings.formatPromptTemplate,
+            } satisfies ManagedChatRequest,
+            onChunk,
+          })
+        : await router.sendStream({
+            mode: 'custom',
+            task: 'story',
+            messages: assembled.messages,
+            generationOptions: buildPresetGenerationOptions(activePreset.settings),
+            onChunk,
+          });
       const { parsed } = parser.finish();
       const { cleanedText, updates } = extractVariables(parsed.maintext || visibleFallback(raw));
       const fromTaggedVars = applyParsedToChat(baseChat.variables ?? {}, parsed).nextVariables;

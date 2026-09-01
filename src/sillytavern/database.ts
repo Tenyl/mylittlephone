@@ -2,12 +2,19 @@
  * IndexedDB Database Layer
  */
 
-import Dexie, { Table } from 'dexie';
-import type { Lorebook, ChatPreset, AppSettings, ChatSession, CharacterCard } from './types';
+import Dexie from 'dexie';
+import type { Table } from 'dexie';
+import type { Lorebook, ChatPreset, AppSettings, ChatSession, CharacterCard, ApiSettings } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
 const DB_NAME = 'SillyTavernWebDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
+
+export function resolveApiSource(settings: { apiSource?: unknown; api?: Partial<ApiSettings> }): AppSettings['apiSource'] {
+  if (settings.apiSource === 'managed' || settings.apiSource === 'custom') return settings.apiSource;
+  const api = settings.api;
+  return api?.baseUrl?.trim() && api.apiKey?.trim() && api.model?.trim() ? 'custom' : 'managed';
+}
 
 export class AppDatabase extends Dexie {
   characters!: Table<CharacterCard>;
@@ -60,6 +67,19 @@ export class AppDatabase extends Dexie {
         setting.activeCharacterId ??= null;
         setting.activeChatId ??= null;
         setting.schemaFirst = false;
+        await tx.table('settings').put(setting);
+      }
+    });
+    this.version(5).stores({
+      characters: 'id, name, importedAt, updatedAt',
+      lorebooks: 'id, name, updatedAt',
+      presets: 'id, name, updatedAt',
+      settings: 'key',
+      chats: 'id, name, updatedAt',
+    }).upgrade(async tx => {
+      const settings = await tx.table('settings').toCollection().toArray();
+      for (const setting of settings) {
+        setting.apiSource = resolveApiSource(setting);
         await tx.table('settings').put(setting);
       }
     });
@@ -151,6 +171,7 @@ export async function importAllData(backup: FullBackup): Promise<void> {
   const incomingSettings = Array.isArray(backup.settings)
     ? backup.settings.map((setting) => ({
         ...setting,
+        apiSource: resolveApiSource(setting),
         api: {
           ...setting.api,
           apiKey: currentSettings?.api.apiKey ?? '',

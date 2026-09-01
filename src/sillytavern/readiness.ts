@@ -30,6 +30,7 @@ export interface SetupReadinessInput {
 }
 
 function hasPrimaryApi(settings: AppSettings): boolean {
+  if (settings.apiSource === 'managed') return true;
   return Boolean(settings.api.baseUrl.trim() && settings.api.apiKey.trim() && settings.api.model.trim());
 }
 
@@ -42,7 +43,8 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
   const characterReady = Boolean(input.character);
   const presetReady = Boolean(input.preset);
   const primaryReady = hasPrimaryApi(input.settings);
-  const secondaryRequired = input.settings.apiMode === 'dual';
+  const managed = input.settings.apiSource === 'managed';
+  const secondaryRequired = !managed && input.settings.apiMode === 'dual';
   const secondaryReady = hasSecondaryApi(input.settings);
   const canStartChat = characterReady && presetReady;
   const missingReasons = [
@@ -69,7 +71,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
       primaryApi: {
         status: primaryReady ? 'complete' : 'missing',
         label: '主 API',
-        detail: primaryReady ? `已配置 ${input.settings.api.model}` : '填写兼容 OpenAI 的地址、密钥与模型',
+        detail: managed ? '使用站点托管聊天服务' : primaryReady ? `已配置 ${input.settings.api.model}` : '填写兼容 OpenAI 的地址、密钥与模型',
       },
       worldbook: {
         status: input.lorebookCount > 0 ? 'complete' : 'optional',
@@ -77,9 +79,9 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         detail: input.lorebookCount > 0 ? `已启用 ${input.lorebookCount} 本` : '可选：导入背景设定与触发条目',
       },
       secondaryApi: {
-        status: secondaryReady ? 'complete' : secondaryRequired ? 'missing' : 'optional',
+        status: managed ? 'optional' : secondaryReady ? 'complete' : secondaryRequired ? 'missing' : 'optional',
         label: '次 API',
-        detail: secondaryReady ? `已配置 ${input.settings.api.secondary?.model}` : '用于变量与总结；未配置时相应任务回退主 API',
+        detail: managed ? '托管模式由站点统一处理' : secondaryReady ? `已配置 ${input.settings.api.secondary?.model}` : '用于变量与总结；未配置时相应任务回退主 API',
       },
     },
   };

@@ -181,6 +181,8 @@ export interface ApiSettings {
 export interface AppSettings {
   key?: string;
   api: ApiSettings;
+  /** managed = same-origin Vercel service; custom = user-owned browser API connection. */
+  apiSource: 'managed' | 'custom';
   /** 'single' = primary API handles all tasks. 'dual' = primary handles story, secondary handles variables. */
   apiMode: 'single' | 'dual';
   activeCharacterId: string | null;
@@ -224,6 +226,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
       maxTokens: 8000,
     },
   },
+  apiSource: 'managed',
   apiMode: 'single',
   activeCharacterId: null,
   activePresetId: null,

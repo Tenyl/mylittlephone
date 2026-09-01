@@ -67,19 +67,39 @@ describe('bundled default content', () => {
       sourceFile: '迷迭香.png',
     })
     expect(defaults.character.avatar).toMatch(/^data:image\/png;base64,/)
-    expect(defaults.character.description).toContain('你扮演的是《明日方舟》世界观中的罗德岛精英干员')
-    expect(defaults.character.description).toContain('{{user}} 固定扮演“博士”')
-    expect(defaults.character.description).toContain('博士是迷迭香最信赖、最亲近的人')
+    expect(defaults.character).toMatchObject({
+      description: '',
+      personality: '',
+      scenario: '',
+      mesExample: '',
+      creatorNotes: '',
+      systemPrompt: '',
+      postHistoryInstructions: '',
+    })
     const charaPayload = JSON.parse(Buffer.from(readPngTextChunk(bytes, 'chara'), 'base64').toString('utf8')) as {
       description: string
-      data: { description: string }
+      personality: string
+      scenario: string
+      mes_example: string
+      creatorcomment: string
+      data: { description: string; personality: string; scenario: string; mes_example: string; creator_notes: string; system_prompt: string; post_history_instructions: string }
     }
     const v3Payload = JSON.parse(Buffer.from(readPngTextChunk(bytes, 'ccv3'), 'base64').toString('utf8')) as typeof charaPayload
     expect(v3Payload).toEqual(charaPayload)
-    expect(v3Payload.description).toBe(v3Payload.data.description)
-    expect(v3Payload.data.description).toContain('你扮演的是《明日方舟》世界观中的罗德岛精英干员')
-    expect(v3Payload.data.description).toContain('{{user}} 固定扮演“博士”')
-    expect(v3Payload.data.description).toContain('博士是迷迭香最信赖、最亲近的人')
+    expect([
+      v3Payload.description,
+      v3Payload.personality,
+      v3Payload.scenario,
+      v3Payload.mes_example,
+      v3Payload.creatorcomment,
+      v3Payload.data.description,
+      v3Payload.data.personality,
+      v3Payload.data.scenario,
+      v3Payload.data.mes_example,
+      v3Payload.data.creator_notes,
+      v3Payload.data.system_prompt,
+      v3Payload.data.post_history_instructions,
+    ]).toEqual(Array(12).fill(''))
     expect(defaults.preset).toMatchObject({ id: BUNDLED_PRESET_ID, name: '默认预设' })
     expect(defaults.preset.settings.prompts).toBeInstanceOf(Array)
     expect(buildPresetGenerationOptions(defaults.preset.settings)).toEqual({
@@ -97,7 +117,7 @@ describe('bundled default content', () => {
     })
   })
 
-  it('assembles the bundled grouped prompt order with the Rosmontis role definition', async () => {
+  it('keeps the editable frontend preset while excluding private role instructions from browser assembly', async () => {
     const bytes = await readFile(resolve(process.cwd(), 'assets/character/迷迭香.png'))
     const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
     const defaults = await loadBundledDefaults(async () => new Response(body, {
@@ -115,9 +135,8 @@ describe('bundled default content', () => {
       character: defaults.character,
     })
 
-    expect(assembled.systemPrompt).toContain('私人移动终端')
-    expect(assembled.systemPrompt).toContain('你将始终扮演“迷迭香”迷迭香')
     expect(assembled.systemPrompt).toContain("Write 迷迭香's next reply")
+    expect(assembled.systemPrompt).not.toContain('最高优先级身份锚定')
   })
 
   it('seeds a fresh database with an active chat while keeping every API field empty', async () => {
@@ -139,6 +158,7 @@ describe('bundled default content', () => {
     expect(chats[0]).toMatchObject({ id: BUNDLED_CHAT_ID, characterId: BUNDLED_CHARACTER_ID, presetId: BUNDLED_PRESET_ID })
     expect(chats[0].messages[0].content).toBe('嗯...我在。')
     expect(settings).toMatchObject({
+      apiSource: 'managed',
       activeCharacterId: BUNDLED_CHARACTER_ID,
       activePresetId: BUNDLED_PRESET_ID,
       activeChatId: BUNDLED_CHAT_ID,
@@ -156,6 +176,51 @@ describe('bundled default content', () => {
     expect(await seedBundledDefaults(loader)).toBe(false)
     expect(loader).not.toHaveBeenCalled()
     expect((await getCharacters()).map((item) => item.id)).toEqual(['existing-character'])
+  })
+
+  it('seeds an empty content library without erasing an existing custom API configuration', async () => {
+    await initializeDatabase()
+    const settings = await getSettings()
+    await saveSettings({
+      ...settings!,
+      apiSource: 'custom',
+      apiMode: 'dual',
+      api: {
+        ...settings!.api,
+        baseUrl: 'https://kept.example/v1',
+        apiKey: 'kept-primary-key',
+        model: 'kept-primary-model',
+        secondary: {
+          enabled: true,
+          baseUrl: 'https://kept-secondary.example/v1',
+          apiKey: 'kept-secondary-key',
+          model: 'kept-secondary-model',
+        },
+      },
+    })
+    const bytes = await readFile(resolve(process.cwd(), 'assets/character/迷迭香.png'))
+    const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+    const defaults = await loadBundledDefaults(async () => new Response(body, {
+      status: 200,
+      headers: { 'Content-Type': 'image/png' },
+    }))
+
+    expect(await seedBundledDefaults(async () => defaults)).toBe(true)
+    expect(await getSettings()).toMatchObject({
+      apiSource: 'custom',
+      apiMode: 'dual',
+      api: {
+        baseUrl: 'https://kept.example/v1',
+        apiKey: 'kept-primary-key',
+        model: 'kept-primary-model',
+        secondary: {
+          enabled: true,
+          baseUrl: 'https://kept-secondary.example/v1',
+          apiKey: 'kept-secondary-key',
+          model: 'kept-secondary-model',
+        },
+      },
+    })
   })
 
   it('refreshes an outdated bundled character without overwriting the user API settings', async () => {
@@ -177,7 +242,7 @@ describe('bundled default content', () => {
       ...existingCharacter,
       id: BUNDLED_CHARACTER_ID,
       name: '迷迭香',
-      description: '新版博士关系提示词',
+      description: '',
       extensions: { mylittlephone_builtin: true, mylittlephone_builtin_version: BUNDLED_CHARACTER_VERSION },
     }
     const loader = vi.fn(async () => ({
@@ -195,7 +260,7 @@ describe('bundled default content', () => {
     expect(await seedBundledDefaults(loader)).toBe(true)
     expect(loader).toHaveBeenCalledOnce()
     expect((await getCharacters()).find((item) => item.id === BUNDLED_CHARACTER_ID)).toMatchObject({
-      description: '新版博士关系提示词',
+      description: '',
       importedAt: existingCharacter.importedAt,
       extensions: { mylittlephone_builtin_version: BUNDLED_CHARACTER_VERSION },
     })

@@ -3,6 +3,10 @@ dist/
 coverage/
 .vite/
 .worktrees/
+.private/
+.env
+.env.*
+!.env.example
 *.tsbuildinfo
 *.log
 .DS_Store

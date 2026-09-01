@@ -59,7 +59,7 @@ export default function App({ streamDelayMs: _streamDelayMs, bundledDefaultsLoad
 
   const sendChatMessage = async (content: string) => {
     if (!chat.readiness.canSend) {
-      pushNotice('warning', '还不能发送消息', '请打开右上角齿轮，在“主 API”中填写地址、密钥和模型。')
+      pushNotice('warning', '还不能发送消息', chat.readiness.missingReasons[0] ?? '请打开右上角齿轮检查聊天服务设置。')
       return false
     }
     return chat.sendGameMessage(content)
