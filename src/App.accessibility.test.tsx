@@ -41,7 +41,8 @@ describe('accessibility contracts', () => {
   it('provides a polite live region and unique ids for interactive controls', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)
-    await user.click(await screen.findByRole('button', { name: '世界书' }))
+    await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
+    await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /世界书/ }))
 
     expect(container.querySelector('[aria-live="polite"]')).toBeInTheDocument()
     await waitFor(() => {
@@ -55,7 +56,8 @@ describe('accessibility contracts', () => {
   it('keeps keyboard focus inside a settings dialog', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: '系统设置' }))
+    await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
+    await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /API 与设置/ }))
     const first = screen.getByRole('button', { name: '返回管理中心' })
     const last = screen.getByRole('button', { name: '测试连接' })
 

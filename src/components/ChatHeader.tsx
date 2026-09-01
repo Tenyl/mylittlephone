@@ -1,4 +1,4 @@
-import { DotsThreeOutline, SidebarSimple, Sparkle, UserCircle } from '@phosphor-icons/react'
+import { ClockCounterClockwise, GearSix, UserCircle } from '@phosphor-icons/react'
 import type { CharacterCard, ChatSession } from '../sillytavern/types'
 
 interface ChatHeaderProps {
@@ -6,19 +6,20 @@ interface ChatHeaderProps {
   chat: ChatSession
   generating: boolean
   onOpenHistory: () => void
-  onOpenNavigation: () => void
+  onOpenManagement: () => void
 }
 
-export function ChatHeader({ character, chat, generating, onOpenHistory, onOpenNavigation }: ChatHeaderProps) {
+export function ChatHeader({ character, chat, generating, onOpenHistory, onOpenManagement }: ChatHeaderProps) {
   return (
     <header className="chat-header">
-      <button id="chat-open-navigation" className="icon-button mobile-only" type="button" aria-label="打开功能导航" onClick={onOpenNavigation}><SidebarSimple size={22} weight="bold" /></button>
       {character.avatar ? <img className="header-avatar" src={character.avatar} alt="" width="42" height="42" /> : <span className="header-avatar avatar-fallback" aria-hidden="true"><UserCircle size={26} /></span>}
       <div className="chat-heading">
-        <div className="chat-title-line"><h1>{character.name}</h1><Sparkle size={14} weight="fill" aria-hidden="true" /></div>
-        <p className={generating ? 'status-generating' : ''}><span className="status-dot" aria-hidden="true" />{generating ? '正在输入…' : `${chat.name} · 本地会话`}</p>
+        <div className="chat-title-line"><h1>{character.name}</h1></div>
+        <p className={generating ? 'status-generating' : ''}><span className="status-dot" aria-hidden="true" />{generating ? '对方正在输入…' : '在线'}</p>
       </div>
-      <button id="chat-open-history" className="icon-button" type="button" aria-label="打开会话历史" onClick={onOpenHistory}><DotsThreeOutline size={24} weight="fill" /></button>
+      <span className="sr-only">当前会话：{chat.name}</span>
+      <button id="chat-open-history" className="icon-button" type="button" aria-label="打开会话历史" onClick={onOpenHistory}><ClockCounterClockwise size={21} /></button>
+      <button id="chat-open-management" className="icon-button" type="button" aria-label="打开管理中心" onClick={onOpenManagement}><GearSix size={21} /></button>
     </header>
   )
 }

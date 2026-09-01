@@ -81,6 +81,17 @@ describe('SillyTavern character chat app', () => {
     expect(screen.queryByText('林予泽')).not.toBeInTheDocument()
   })
 
+  it('uses one immersive full-window chat shell without permanent side rails', async () => {
+    await seedReadyChat()
+    const { container } = render(<App />)
+
+    expect(await screen.findByRole('heading', { name: character.name, level: 1 })).toBeInTheDocument()
+    expect(container.querySelector('#immersive-chat-shell')).toBeInTheDocument()
+    expect(screen.queryByLabelText('主要功能')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('当前上下文')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '打开管理中心' })).toBeInTheDocument()
+  })
+
   it('sends with Enter and renders a streamed six-tag reply', async () => {
     await seedReadyChat()
     vi.stubGlobal('fetch', vi.fn(async () => sseResponse([

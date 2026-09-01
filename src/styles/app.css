@@ -3,6 +3,8 @@
 .ambient-one { width: 520px; height: 520px; left: -180px; top: -220px; background: radial-gradient(circle, rgba(99, 162, 255, .24), transparent 70%); }
 .ambient-two { width: 620px; height: 620px; right: -240px; bottom: -310px; background: radial-gradient(circle, rgba(124, 104, 245, .16), transparent 68%); }
 .app-window { width: min(1440px, calc(100vw - 48px)); height: min(900px, calc(100dvh - 48px)); min-height: 680px; display: grid; grid-template-columns: 224px minmax(480px, 1fr) 292px; overflow: hidden; border: 1px solid rgba(255,255,255,.8); border-radius: 28px; background: var(--surface); box-shadow: var(--shadow-window); backdrop-filter: blur(22px) saturate(118%); }
+.app-stage:has(.immersive-chat-shell) { padding: 0; }
+.app-window.immersive-chat-shell { width: 100%; height: 100dvh; min-height: 0; grid-template-columns: minmax(0, 1fr); border: 0; border-radius: 0; box-shadow: none; }
 
 .nav-rail { display: flex; flex-direction: column; padding: 24px 16px 18px; border-right: 1px solid var(--line); background: linear-gradient(180deg, rgba(245,249,253,.88), rgba(235,243,250,.72)); }
 .brand-mark { display: flex; align-items: center; gap: 11px; padding: 0 8px 24px; }
