@@ -253,11 +253,15 @@ export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
   timestamp: number;
+  status?: 'sent' | 'streaming' | 'interrupted' | 'failed';
   variables?: Record<string, string | number>;
   metadata?: {
     tokenCount?: number;
     lorebookEntries?: string[];
     processingTime?: number;
+    summary?: string;
+    rawContent?: string;
+    error?: string;
   };
   parsed?: ParsedTags;
   variablesAfter?: Record<string, any>;
@@ -268,11 +272,14 @@ export interface ChatSession {
   id: string;
   name: string;
   messages: ChatMessage[];
+  characterId?: string;
   characterName: string;
   userName: string;
   presetId: string | null;
   lorebookIds: string[];
   variables: Record<string, any>;
+  parentChatId?: string;
+  branchedFromMessageId?: string;
   createdAt: number;
   updatedAt: number;
 }

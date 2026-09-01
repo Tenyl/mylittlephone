@@ -2,6 +2,7 @@ import type { ApiSettings, ApiTarget, Task } from './types';
 
 interface ChatRequest {
   messages: Array<{ role: string; content: string }>;
+  signal?: AbortSignal;
   [key: string]: any;
 }
 
@@ -36,13 +37,15 @@ export function createApiRouter(settings: ApiSettings, deps: RouterDeps = {}) {
 
   async function callOnce(target: ApiTarget, body: ChatRequest): Promise<Response> {
     const ep = endpointFor(target);
+    const { signal, ...jsonBody } = body;
     return await fetchImpl(`${ep.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${ep.apiKey}`,
       },
-      body: JSON.stringify({ ...body, model: ep.model }),
+      body: JSON.stringify({ ...jsonBody, model: ep.model }),
+      signal,
     });
   }
 

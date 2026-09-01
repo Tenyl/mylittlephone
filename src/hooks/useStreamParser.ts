@@ -20,30 +20,38 @@ export function useStreamParser(tags: string[], opaqueTags: string[]) {
   const parserRef = useRef<StreamTagParser | null>(null);
   const eventBufRef = useRef<ParserEvent[]>([]);
   const [state, setState] = useState<StreamParserState>(initialState);
+  const stateRef = useRef<StreamParserState>(initialState);
 
   const start = useCallback(() => {
     parserRef.current = new StreamTagParser(tags, opaqueTags);
     eventBufRef.current = [];
-    setState({ ...initialState, isStreaming: true });
+    stateRef.current = { ...initialState, isStreaming: true };
+    setState(stateRef.current);
   }, [tags, opaqueTags]);
 
-  const feed = useCallback((chunk: string) => {
-    if (!parserRef.current) return;
+  const feed = useCallback((chunk: string): StreamParserState => {
+    if (!parserRef.current) return stateRef.current;
     const events = parserRef.current.feed(chunk);
     eventBufRef.current.push(...events);
-    setState(prev => applyEvents(prev, events));
+    stateRef.current = applyEvents(stateRef.current, events);
+    setState(stateRef.current);
+    return stateRef.current;
   }, []);
 
   const finish = useCallback((): { events: ParserEvent[]; parsed: ParsedTags } => {
     if (!parserRef.current) return { events: [], parsed: emptyParsed() };
     const tail = parserRef.current.finish();
     eventBufRef.current.push(...tail);
-    setState(prev => ({ ...applyEvents(prev, tail), isStreaming: false }));
+    stateRef.current = { ...applyEvents(stateRef.current, tail), isStreaming: false };
+    setState(stateRef.current);
     const all = eventBufRef.current;
     return { events: all, parsed: aggregateEvents(all) };
   }, []);
 
-  const reset = useCallback(() => setState(initialState), []);
+  const reset = useCallback(() => {
+    stateRef.current = initialState;
+    setState(initialState);
+  }, []);
 
   return { state, start, feed, finish, reset };
 }
