@@ -38,21 +38,29 @@ export function AppShell(props: AppShellProps) {
 
   return (
     <div className="app-stage">
-      <div id="immersive-chat-shell" className="app-window immersive-chat-shell">
-        <main className="chat-column">
-          {activeChat && activeCharacter && profile ? (
-            <>
-              <ChatHeader profile={profile} chat={activeChat} generating={generating} onOpenHistory={() => onOpenPanel('history')} onOpenManagement={onOpenManagement} />
-              <MessageList messages={activeChat.messages} profile={profile} onEdit={onEditMessage} onDeleteFrom={onDeleteFromMessage} onBranch={onBranchMessage} onRegenerate={onRegenerate} />
-              <Composer characterName={profile.characterName} generating={generating} onSend={onSend} onStop={onStop} />
-            </>
-          ) : (
-            <div className="setup-column">
-              <button id="setup-open-management" className="icon-button setup-nav-trigger" type="button" aria-label="打开管理中心" onClick={onOpenManagement}><GearSix size={21} /></button>
-              <SetupGuide readiness={readiness} onOpenCharacter={() => onOpenPanel('character')} onOpenPreset={() => onOpenPanel('presets')} onOpenSettings={() => onOpenPanel('settings')} onOpenLorebooks={() => onOpenPanel('worldbook')} onStart={onStart} />
-            </div>
-          )}
-        </main>
+      <div id="phone-device" className="phone-device">
+        <div className="phone-hardware" aria-hidden="true"><i className="phone-speaker" /><i className="phone-camera" /></div>
+        <i className="phone-key phone-key-volume-up" aria-hidden="true" />
+        <i className="phone-key phone-key-volume-down" aria-hidden="true" />
+        <i className="phone-key phone-key-power" aria-hidden="true" />
+        <div id="phone-screen" className="phone-screen">
+          <div id="immersive-chat-shell" className="app-window immersive-chat-shell">
+            <main className="chat-column">
+              {activeChat && activeCharacter && profile ? (
+                <>
+                  <ChatHeader profile={profile} chat={activeChat} generating={generating} onOpenHistory={() => onOpenPanel('history')} onOpenManagement={onOpenManagement} />
+                  <MessageList messages={activeChat.messages} profile={profile} onEdit={onEditMessage} onDeleteFrom={onDeleteFromMessage} onBranch={onBranchMessage} onRegenerate={onRegenerate} />
+                  <Composer characterName={profile.characterName} generating={generating} onSend={onSend} onStop={onStop} />
+                </>
+              ) : (
+                <div className="setup-column">
+                  <button id="setup-open-management" className="icon-button setup-nav-trigger" type="button" aria-label="打开管理中心" onClick={onOpenManagement}><GearSix size={21} /></button>
+                  <SetupGuide readiness={readiness} onOpenCharacter={() => onOpenPanel('character')} onOpenPreset={() => onOpenPanel('presets')} onOpenSettings={() => onOpenPanel('settings')} onOpenLorebooks={() => onOpenPanel('worldbook')} onStart={onStart} />
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
       </div>
     </div>
   )

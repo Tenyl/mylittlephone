@@ -124,11 +124,14 @@ describe('SillyTavern character chat app', () => {
     expect(bodyText).not.toContain('test-model')
   })
 
-  it('uses one immersive full-window chat shell without permanent side rails', async () => {
+  it('uses one immersive phone chat shell without permanent side rails', async () => {
     await seedReadyChat()
     const { container } = render(<App />)
 
     expect(await screen.findByRole('heading', { name: character.name, level: 1 })).toBeInTheDocument()
+    expect(container.querySelector('#phone-device')).toBeInTheDocument()
+    expect(container.querySelector('#phone-screen')).toBeInTheDocument()
+    expect(container.querySelector('.phone-hardware[aria-hidden="true"]')).toBeInTheDocument()
     expect(container.querySelector('#immersive-chat-shell')).toBeInTheDocument()
     expect(screen.queryByLabelText('主要功能')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('当前上下文')).not.toBeInTheDocument()
