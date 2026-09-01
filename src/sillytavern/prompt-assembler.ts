@@ -2,7 +2,8 @@
  * Prompt Assembler
  */
 
-import type { ChatPreset, Lorebook, ChatMessage, MatchedEntry } from './types';
+import type { ChatPreset, Lorebook, ChatMessage, MatchedEntry, CharacterCard } from './types';
+import { DEFAULT_PROMPT_ORDER } from './types';
 import { createLorebookEngine } from './lorebook-engine';
 import { formatVariablesForPrompt } from './variables';
 
@@ -13,9 +14,11 @@ export interface AssembleOptions {
   lorebooks: Lorebook[];
   userName: string;
   characterName: string;
+  character?: CharacterCard;
   variables?: Record<string, string | number>;
   extraVariables?: Record<string, any>;
   formatPrompt?: string;
+  includeFirstMessage?: boolean;
 }
 
 export interface AssembleResult {
@@ -25,7 +28,7 @@ export interface AssembleResult {
 }
 
 export function assemblePrompt(options: AssembleOptions): AssembleResult {
-  const { userInput, history, preset, lorebooks, userName, characterName, variables, extraVariables, formatPrompt } = options;
+  const { userInput, history, preset, lorebooks, userName, characterName, character, variables, extraVariables, formatPrompt, includeFirstMessage } = options;
 
   const allMatchedEntries: MatchedEntry[] = [];
   const scanText = userInput + ' ' + history.slice(-3).map(m => m.content).join(' ');
@@ -53,12 +56,15 @@ export function assemblePrompt(options: AssembleOptions): AssembleResult {
     currentTokens += msgTokens;
   }
 
-  const promptOrder = (preset.settings.prompt_order || []) as Array<{
+  const configuredPromptOrder = (preset.settings.prompt_order || []) as Array<{
     identifier: string;
     name?: string;
     role?: 'system' | 'user' | 'assistant';
     enabled?: boolean;
   }>;
+  const promptOrder = configuredPromptOrder.length > 0
+    ? configuredPromptOrder
+    : DEFAULT_PROMPT_ORDER.map((item) => ({ ...item, enabled: true }));
 
   const prompts = (preset.settings.prompts || []) as Array<{
     identifier: string;
@@ -72,21 +78,20 @@ export function assemblePrompt(options: AssembleOptions): AssembleResult {
       const content = uniqueEntries.map(e => e.entry.content).join('\n\n');
       return content || null;
     }
-    // Character / scenario placeholders (can be filled when character cards are implemented)
     if (identifier === 'charDescription') {
-      return preset.settings.character_description || null;
+      return character?.description || preset.settings.character_description || null;
     }
     if (identifier === 'charPersonality') {
-      return preset.settings.character_personality || null;
+      return character?.personality || preset.settings.character_personality || null;
     }
     if (identifier === 'scenario') {
-      return preset.settings.scenario || null;
+      return character?.scenario || preset.settings.scenario || null;
     }
     if (identifier === 'personaDescription') {
       return preset.settings.persona_description || null;
     }
     if (identifier === 'dialogueExamples') {
-      return preset.settings.dialogue_examples || null;
+      return character?.mesExample || preset.settings.dialogue_examples || null;
     }
     if (identifier === 'groupNudge') {
       return preset.settings.group_nudge_prompt || null;
@@ -110,7 +115,9 @@ export function assemblePrompt(options: AssembleOptions): AssembleResult {
   }
 
   const assembledMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [];
-  let systemAccumulator = '';
+  let systemAccumulator = character?.systemPrompt
+    ? replaceMacros(character.systemPrompt, { userName, characterName, userInput, variables })
+    : '';
   let hasChatHistory = false;
 
   for (const item of promptOrder) {
@@ -167,6 +174,20 @@ export function assemblePrompt(options: AssembleOptions): AssembleResult {
   // Fallback: append history if prompt_order didn't include it
   if (!hasChatHistory) {
     assembledMessages.push(...recentHistory);
+  }
+
+  if (includeFirstMessage && history.length === 0 && character?.firstMes) {
+    assembledMessages.push({
+      role: 'assistant',
+      content: replaceMacros(character.firstMes, { userName, characterName, userInput, variables }),
+    });
+  }
+
+  if (character?.postHistoryInstructions) {
+    assembledMessages.push({
+      role: 'system',
+      content: replaceMacros(character.postHistoryInstructions, { userName, characterName, userInput, variables }),
+    });
   }
 
   // Always append the current user input as the final message
