@@ -230,6 +230,7 @@ export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = lo
   }, [characters, settings]);
 
   const deleteCharacter = useCallback(async (characterId: string) => {
+    if (characterId === BUNDLED_CHARACTER_ID) return;
     await deleteCharacterDb(characterId);
     setCharacters((current) => current.filter((item) => item.id !== characterId));
     if (settings?.activeCharacterId === characterId) {
@@ -581,6 +582,19 @@ export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = lo
     await replaceChat({ ...activeChat, variables, updatedAt: Date.now() });
   }, [activeChat, replaceChat]);
 
+  const updateActiveChatProfile = useCallback(async (
+    patch: Partial<Pick<ChatSession, 'characterDisplayName' | 'characterAvatar'>>,
+  ) => {
+    if (!activeChat) return;
+    await replaceChat({
+      ...activeChat,
+      ...patch,
+      characterDisplayName: patch.characterDisplayName?.trim() || undefined,
+      characterAvatar: patch.characterAvatar || undefined,
+      updatedAt: Date.now(),
+    });
+  }, [activeChat, replaceChat]);
+
   const resetAllData = useCallback(async () => {
     router.abort();
     await clearAllData();
@@ -609,7 +623,7 @@ export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = lo
     createChat, selectChat, renameChat, removeChat,
     sendMessage, sendGameMessage, stopGeneration, abortStream: stopGeneration,
     deleteMessage, editMessage, editAndRegenerate, deleteFromMessage, rollbackTo, jumpToFloor, regenerateLast, branchFromMessage,
-    setChatVariables, resetAllData, reloadData,
+    setChatVariables, updateActiveChatProfile, resetAllData, reloadData,
     openSettings: () => setShowSettings(true), openCharacters: () => setShowCharacters(true), openLorebooks: () => setShowLorebooks(true), openPresets: () => setShowPresets(true), openVariables: () => setShowVariables(true), openHistory: () => setShowHistory(true),
     showSettings, setShowSettings, showCharacters, setShowCharacters, showLorebooks, setShowLorebooks, showPresets, setShowPresets, showVariables, setShowVariables, showHistory, setShowHistory,
     toast, showToast,

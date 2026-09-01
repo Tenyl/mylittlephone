@@ -99,6 +99,25 @@ describe('useSillytavern controller', () => {
     expect(result.current.readiness.canSend).toBe(true)
   })
 
+  it('stores display overrides only on the active chat and protects the bundled character', async () => {
+    const { result } = renderHook(() => useSillytavern(bundledDefaultsLoader))
+    await waitFor(() => expect(result.current.activeCharacter?.name).toBe('迷迭香'))
+
+    await act(async () => result.current.updateActiveChatProfile({
+      characterDisplayName: '小迷',
+      characterAvatar: 'data:image/png;base64,eA==',
+    }))
+
+    expect(result.current.activeChat).toMatchObject({
+      characterDisplayName: '小迷',
+      characterAvatar: 'data:image/png;base64,eA==',
+    })
+    expect(result.current.activeCharacter?.name).toBe('迷迭香')
+
+    await act(async () => result.current.deleteCharacter(BUNDLED_CHARACTER_ID))
+    expect(result.current.characters.some((item) => item.id === BUNDLED_CHARACTER_ID)).toBe(true)
+  })
+
   it('persists active imports and a newly created chat across remounts', async () => {
     const first = renderHook(() => useSillytavern(bundledDefaultsLoader))
     await waitFor(() => expect(first.result.current.initialized).toBe(true))
