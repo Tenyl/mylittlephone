@@ -26,10 +26,12 @@ export function VariablesPanel({ variables, disabled, onSave }: VariablesPanelPr
   return (
     <div className="variables-panel">
       <section className="world-summary"><span><BracketsCurly size={24} weight="duotone" /></span><div><h3>会话变量</h3><p>模型输出的 `vars` 标签和内联 `var` 指令会自动合并，也可以在这里手动调整。</p></div></section>
-      <label htmlFor="variables-json-editor">JSON 数据</label>
-      <textarea id="variables-json-editor" value={value} rows={18} spellCheck={false} disabled={disabled} aria-invalid={Boolean(error)} aria-describedby={error ? 'variables-json-error' : undefined} onChange={(event) => setValue(event.target.value)} />
-      {error && <p id="variables-json-error" className="field-error" role="alert">{error}</p>}
-      <button id="variables-save" className="panel-primary-action" type="button" disabled={disabled} onClick={() => void save()}><FloppyDisk size={18} />保存变量</button>
+      {disabled ? <div className="panel-empty-state"><strong>请先创建或打开一个会话</strong><span>会话建立后，模型生成的变量会显示在这里。</span></div> : <>
+        <label htmlFor="variables-json-editor">JSON 数据</label>
+        <textarea id="variables-json-editor" value={value} rows={18} spellCheck={false} aria-invalid={Boolean(error)} aria-describedby={error ? 'variables-json-error' : undefined} onChange={(event) => setValue(event.target.value)} />
+        {error && <p id="variables-json-error" className="field-error" role="alert">{error}</p>}
+        <button id="variables-save" className="panel-primary-action" type="button" onClick={() => void save()}><FloppyDisk size={18} />保存变量</button>
+      </>}
     </div>
   )
 }

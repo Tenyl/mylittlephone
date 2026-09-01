@@ -6,6 +6,7 @@ import { ManagementCenter, type ManagementSection } from './components/Managemen
 import { PanelDrawer } from './components/PanelDrawer'
 import { ToastRegion, type Notice, type NoticeTone } from './components/ToastRegion'
 import { CharacterPanel } from './features/character/CharacterPanel'
+import { ChatProfilePanel } from './features/chat-profile/ChatProfilePanel'
 import { HistoryPanel } from './features/history/HistoryPanel'
 import { PresetPanel } from './features/presets/PresetPanel'
 import { SettingsPanel } from './features/settings/SettingsPanel'
@@ -124,7 +125,9 @@ export default function App({ streamDelayMs: _streamDelayMs, bundledDefaultsLoad
     return { title: '导入并覆盖本地内容？', description: `备份包含 ${backup.characters?.length ?? 0} 张角色卡、${backup.lorebooks?.length ?? 0} 本世界书、${backup.presets?.length ?? 0} 份预设与 ${backup.chats?.length ?? 0} 个会话。现有 API 密钥会保留。`, label: '导入备份' }
   })() : null
 
-  const panelContent = activePanel === 'character' ? (
+  const panelContent = activePanel === 'chat-profile' ? (
+    <ChatProfilePanel chat={chat.activeChat} character={chat.activeCharacter} onUpdate={chat.updateActiveChatProfile} onError={(message) => pushNotice('error', '头像未更新', message)} />
+  ) : activePanel === 'character' ? (
     <CharacterPanel characters={chat.characters} activeCharacterId={chat.settings?.activeCharacterId ?? null} onSelect={async (id) => { await chat.selectCharacter(id); pushNotice('info', '聊天对象已切换', '请创建新会话以使用这张角色卡。') }} onImport={async (file) => { const character = await chat.importCharacter(file); pushNotice('success', '角色卡已导入', `“${character.name}”已加入本地角色卡库。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-character', item })} onError={fileError} />
   ) : activePanel === 'worldbook' ? (
     <WorldBookPanel lorebooks={chat.lorebooks} activeIds={chat.settings?.activeLorebookIds ?? []} onToggle={chat.toggleLorebook} onImport={async (book) => { await chat.addLorebook(book); pushNotice('success', '世界书已导入', `“${book.name}”与 ${book.entries.length} 个条目已保存。`) }} onSave={async (book) => { await chat.updateLorebook(book); pushNotice('success', '世界书已保存', `“${book.name}”的规则已更新。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-lorebook', item })} onError={fileError} />

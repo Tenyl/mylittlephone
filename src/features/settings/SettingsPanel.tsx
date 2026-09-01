@@ -1,9 +1,10 @@
-import { CloudCheck, Eye, EyeSlash, FloppyDisk, PlugsConnected, SlidersHorizontal, Trash, UserGear, Wrench, X } from '@phosphor-icons/react'
+import { Camera, CloudCheck, Eye, EyeSlash, FloppyDisk, PlugsConnected, SlidersHorizontal, Trash, UserCircle, UserGear, Wrench, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { fetchModels, testConnection } from '../../sillytavern/api-tools'
+import { readProfileImage } from '../../sillytavern/profile-image'
 import { DEFAULT_FORMAT_PROMPT, type AppSettings } from '../../sillytavern/types'
 
-type Tab = 'primary' | 'secondary' | 'game' | 'data'
+type Tab = 'profile' | 'primary' | 'secondary' | 'format' | 'data'
 
 interface SettingsPanelProps {
   settings: AppSettings
@@ -52,8 +53,27 @@ export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, on
   return (
     <div className="settings-panel">
       <nav className="settings-tabs" aria-label="设置分类">
-        {([['primary', '主 API'], ['secondary', '次 API'], ['game', '游戏显示'], ['data', '本地数据']] as const).map(([id, label]) => <button id={`settings-tab-${id}`} key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>{label}</button>)}
+        {([['profile', '我的资料'], ['primary', '聊天服务'], ['secondary', '次 API'], ['format', '回复格式'], ['data', '本地数据']] as const).map(([id, label]) => <button id={`settings-tab-${id}`} key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>{label}</button>)}
       </nav>
+
+      {tab === 'profile' && (
+        <section className="settings-section" aria-labelledby="player-profile-heading">
+          <div className="settings-heading"><span><UserCircle size={22} /></span><div><h3 id="player-profile-heading">我的资料</h3><p>昵称会进入角色对你的称呼；头像只用于本机聊天界面。</p></div></div>
+          <div className="profile-editor-card">
+            {settings.userAvatar ? <img src={settings.userAvatar} alt="当前玩家头像" width="72" height="72" /> : <span className="profile-avatar-fallback" aria-hidden="true"><UserCircle size={36} /></span>}
+            <div>
+              <strong>{settings.userName.trim() || '用户'}</strong>
+              <span>保存在当前浏览器</span>
+            </div>
+          </div>
+          <label htmlFor="user-display-name">玩家昵称</label><input id="user-display-name" value={settings.userName} maxLength={32} onChange={(event) => void onUpdate({ userName: event.target.value })} />
+          <div className="profile-image-actions">
+            <label htmlFor="player-avatar-file"><input id="player-avatar-file" type="file" accept="image/png,image/jpeg,image/webp" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; try { await onUpdate({ userAvatar: await readProfileImage(file) }); onNotice('success', '头像已更新', '新的玩家头像已保存在当前浏览器。') } catch (cause) { onNotice('error', '头像未更新', cause instanceof Error ? cause.message : '头像文件无法读取') } finally { event.target.value = '' } }} /><Camera size={18} />选择头像</label>
+            {settings.userAvatar && <button id="player-avatar-remove" type="button" onClick={() => void onUpdate({ userAvatar: '' })}><Trash size={18} />移除头像</button>}
+          </div>
+          <p className="field-helper">支持 PNG、JPEG、WebP，最大 2MB。图片不会随聊天请求发送。</p>
+        </section>
+      )}
 
       {tab === 'primary' && (
         <section className="settings-section" aria-labelledby="primary-api-heading">
@@ -95,10 +115,9 @@ export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, on
         </section>
       )}
 
-      {tab === 'game' && (
-        <section className="settings-section" aria-labelledby="game-settings-heading">
-          <div className="settings-heading"><span><SlidersHorizontal size={22} /></span><div><h3 id="game-settings-heading">回复格式与标签</h3><p>聊天窗口只展示最终回复；总结与变量仅用于会话内部状态。</p></div></div>
-          <label htmlFor="user-display-name">玩家名称</label><input id="user-display-name" value={settings.userName} onChange={(event) => void onUpdate({ userName: event.target.value })} />
+      {tab === 'format' && (
+        <section className="settings-section" aria-labelledby="format-settings-heading">
+          <div className="settings-heading"><span><SlidersHorizontal size={22} /></span><div><h3 id="format-settings-heading">回复格式与标签</h3><p>这些设置负责提取最终回复，并让摘要与变量在后台生效。</p></div></div>
           <fieldset><legend>解析标签</legend><div className="tag-editor">{settings.customTags.map((tag) => <span key={tag}>{tag}<button id={`remove-custom-tag-${tag}`} type="button" aria-label={`删除标签${tag}`} onClick={() => void onUpdate({ customTags: settings.customTags.filter((item) => item !== tag) })}><X size={13} weight="bold" /></button></span>)}</div><div className="tag-add"><label className="sr-only" htmlFor="new-custom-tag">新标签名</label><input id="new-custom-tag" value={newTag} onChange={(event) => setNewTag(event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))} /><button id="add-custom-tag" type="button" disabled={!newTag || settings.customTags.includes(newTag)} onClick={() => { void onUpdate({ customTags: [...settings.customTags, newTag] }); setNewTag('') }}>添加标签</button></div></fieldset>
           <label htmlFor="format-prompt-template">格式提示词</label><textarea id="format-prompt-template" value={settings.formatPromptTemplate} rows={12} onChange={(event) => void onUpdate({ formatPromptTemplate: event.target.value })} />
           <button id="restore-format-prompt" className="secondary-action" type="button" onClick={() => void onUpdate({ formatPromptTemplate: DEFAULT_FORMAT_PROMPT })}><FloppyDisk size={17} />恢复沉浸聊天默认格式</button>

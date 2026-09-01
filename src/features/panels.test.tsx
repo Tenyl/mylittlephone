@@ -32,7 +32,10 @@ describe('configuration panels with bundled defaults', () => {
     await openManagementSection(user, /角色卡/)
     const dialog = screen.getByRole('dialog', { name: '角色卡库' })
     expect(within(dialog).getByRole('heading', { name: '迷迭香', level: 3 })).toBeInTheDocument()
-    expect(within(dialog).getByRole('heading', { name: '内置角色设定已隐藏', level: 4 })).toBeInTheDocument()
+    expect(within(dialog).queryByText('内置角色设定已隐藏')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('来源文件')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('导入时间')).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: '删除角色卡' })).not.toBeInTheDocument()
     expect(within(dialog).queryByText('罗德岛精英干员。')).not.toBeInTheDocument()
 
     await user.upload(document.querySelector<HTMLInputElement>('#import-character-file')!, new File([
@@ -42,6 +45,9 @@ describe('configuration panels with bundled defaults', () => {
     expect(await within(dialog).findByRole('heading', { name: '顾遥' })).toBeInTheDocument()
     expect(within(dialog).getByText('顾遥.json')).toBeInTheDocument()
     expect(within(dialog).getByText('长期记录城市夜景。')).toBeInTheDocument()
+    expect(within(dialog).getByText('来源文件')).toBeInTheDocument()
+    expect(within(dialog).getByText('导入时间')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: '删除角色卡' })).toBeInTheDocument()
     await user.keyboard('{Escape}')
     expect(screen.getByText('已选择 顾遥')).toBeInTheDocument()
   })

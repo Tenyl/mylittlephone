@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   BookOpenText,
   BracketsCurly,
+  ChatCircleText,
   Database,
   GearSix,
   IdentificationCard,
@@ -12,7 +13,7 @@ import { createPortal } from 'react-dom'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap'
 
-export type ManagementSection = 'home' | 'character' | 'worldbook' | 'presets' | 'variables' | 'settings' | 'data'
+export type ManagementSection = 'home' | 'chat-profile' | 'character' | 'worldbook' | 'presets' | 'variables' | 'settings' | 'data'
 
 interface ManagementCenterProps {
   section: ManagementSection
@@ -23,6 +24,7 @@ interface ManagementCenterProps {
 
 const sectionTitles: Record<ManagementSection, string> = {
   home: '管理中心',
+  'chat-profile': '当前聊天',
   character: '角色卡库',
   worldbook: '世界书',
   presets: '对话预设',
@@ -32,11 +34,12 @@ const sectionTitles: Record<ManagementSection, string> = {
 }
 
 const managementEntries = [
+  { id: 'chat-profile', section: 'chat-profile' as const, label: '当前聊天', helper: '设置备注与本会话头像', icon: ChatCircleText },
   { id: 'character', section: 'character' as const, label: '角色卡', helper: '导入、查看与切换聊天对象', icon: IdentificationCard },
   { id: 'worldbook', section: 'worldbook' as const, label: '世界书', helper: '管理背景资料与触发条目', icon: BookOpenText },
   { id: 'presets', section: 'presets' as const, label: '对话预设', helper: '调整提示词与生成参数', icon: SlidersHorizontal },
   { id: 'api', section: 'settings' as const, label: 'API 与设置', helper: '连接模型并配置回复方式', icon: GearSix },
-  { id: 'variables', section: 'variables' as const, label: '会话变量', helper: '查看当前会话的运行数据', icon: BracketsCurly },
+  { id: 'variables', section: 'variables' as const, label: '会话变量', helper: '高级：查看进入提示词的运行数据', icon: BracketsCurly },
   { id: 'local-data', section: 'data' as const, label: '本地数据', helper: '备份、导入或清理本机内容', icon: Database },
 ]
 
