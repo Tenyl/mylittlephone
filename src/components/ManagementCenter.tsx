@@ -46,7 +46,7 @@ export function ManagementCenter({ section, onSelectSection, onClose, children }
   const backRef = useRef<HTMLButtonElement>(null)
   const title = sectionTitles[section]
   useDialogFocusTrap(dialogRef, closeRef, onClose)
-  useEffect(() => { if (section !== 'home') backRef.current?.focus() }, [section])
+  useEffect(() => { (section === 'home' ? closeRef.current : backRef.current)?.focus() }, [section])
 
   return createPortal(
     <div className="management-scrim" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>

@@ -44,7 +44,10 @@ describe('accessibility contracts', () => {
     await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
     await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /世界书/ }))
 
-    expect(screen.getByRole('button', { name: '返回管理中心' })).toHaveFocus()
+    const back = screen.getByRole('button', { name: '返回管理中心' })
+    expect(back).toHaveFocus()
+    await user.click(back)
+    expect(screen.getByRole('button', { name: '关闭管理中心' })).toHaveFocus()
   })
 
   it('provides a polite live region and unique ids for interactive controls', async () => {
