@@ -8,7 +8,7 @@ import type { Lorebook, ChatPreset, AppSettings, ChatSession, CharacterCard, Api
 import { DEFAULT_SETTINGS } from './types';
 
 const DB_NAME = 'SillyTavernWebDB';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 export function resolveApiSource(settings: { apiSource?: unknown; api?: Partial<ApiSettings> }): AppSettings['apiSource'] {
   if (settings.apiSource === 'managed' || settings.apiSource === 'custom') return settings.apiSource;
@@ -80,6 +80,19 @@ export class AppDatabase extends Dexie {
       const settings = await tx.table('settings').toCollection().toArray();
       for (const setting of settings) {
         setting.apiSource = resolveApiSource(setting);
+        await tx.table('settings').put(setting);
+      }
+    });
+    this.version(6).stores({
+      characters: 'id, name, importedAt, updatedAt',
+      lorebooks: 'id, name, updatedAt',
+      presets: 'id, name, updatedAt',
+      settings: 'key',
+      chats: 'id, name, updatedAt',
+    }).upgrade(async tx => {
+      const settings = await tx.table('settings').toCollection().toArray();
+      for (const setting of settings) {
+        setting.userAvatar ??= '';
         await tx.table('settings').put(setting);
       }
     });

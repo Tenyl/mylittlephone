@@ -190,6 +190,7 @@ export interface AppSettings {
   activeLorebookIds: string[];
   activeChatId: string | null;
   userName: string;
+  userAvatar: string;
   characterName: string;
   theme: 'dark' | 'light';
   language: 'zh' | 'en';
@@ -233,6 +234,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   activeLorebookIds: [],
   activeChatId: null,
   userName: '用户',
+  userAvatar: '',
   characterName: '',
   theme: 'light',
   language: 'zh',
@@ -274,6 +276,10 @@ export interface ChatSession {
   characterId?: string;
   characterName: string;
   userName: string;
+  /** Optional UI-only character nickname for this local session. */
+  characterDisplayName?: string;
+  /** Optional UI-only character avatar for this local session. */
+  characterAvatar?: string;
   presetId: string | null;
   lorebookIds: string[];
   variables: Record<string, any>;

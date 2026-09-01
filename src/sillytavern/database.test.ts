@@ -24,6 +24,7 @@ describe('empty-first database initialization', () => {
       activePresetId: null,
       activeLorebookIds: [],
       activeChatId: null,
+      userAvatar: '',
       uiMode: 'chat',
       customTags: ['maintext', 'option', 'sum', 'vars', 'thinking', 'think'],
     })
@@ -57,9 +58,11 @@ describe('empty-first database initialization', () => {
     expect(backup.settings[0].api.secondary?.apiKey).toBe('')
 
     backup.settings[0].userName = '导入后的用户'
+    backup.settings[0].userAvatar = 'data:image/png;base64,eA=='
     await importAllData(backup)
     const restored = await getDatabase().settings.get('settings')
     expect(restored?.userName).toBe('导入后的用户')
+    expect(restored?.userAvatar).toBe('data:image/png;base64,eA==')
     expect(restored?.api.apiKey).toBe('primary-secret')
     expect(restored?.api.secondary?.apiKey).toBe('secondary-secret')
   })
