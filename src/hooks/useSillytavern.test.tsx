@@ -35,6 +35,19 @@ const preset: ChatPreset = {
   name: '日常聊天',
   settings: {
     stream_openai: true,
+    temperature: 0.42,
+    freq_pen_openai: 0.13,
+    presence_penalty: 0.24,
+    top_p_openai: 0.84,
+    top_k: 40,
+    top_a_openai: 0.2,
+    min_p: 0.05,
+    repetition_penalty_openai: 1.08,
+    openai_max_tokens: 1337,
+    seed: 7,
+    n: 1,
+    reasoning_effort: 'high',
+    verbosity: 'low',
     prompt_order: [{ identifier: 'chatHistory', role: 'system', enabled: true }],
   },
   createdAt: 1,
@@ -109,7 +122,7 @@ describe('useSillytavern controller', () => {
       'data: [DONE]',
       '',
     ].join('\n')
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body, {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body, {
       status: 200,
       headers: { 'Content-Type': 'text/event-stream' },
     }))
@@ -126,6 +139,24 @@ describe('useSillytavern controller', () => {
     expect(assistant?.parsed?.options).toEqual([])
     expect(assistant?.metadata).not.toHaveProperty('rawContent')
     expect(assistant?.metadata?.summary).toBe('问候')
+    const requestBody = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body))
+    expect(requestBody).toMatchObject({
+      model: 'model',
+      stream: true,
+      temperature: 0.42,
+      frequency_penalty: 0.13,
+      presence_penalty: 0.24,
+      top_p: 0.84,
+      top_k: 40,
+      top_a: 0.2,
+      min_p: 0.05,
+      repetition_penalty: 1.08,
+      max_tokens: 1337,
+      seed: 7,
+      n: 1,
+      reasoning_effort: 'high',
+      verbosity: 'low',
+    })
 
     await act(async () => result.current.branchFromMessage(assistant!.id, '问候分支'))
     expect(result.current.activeChat?.name).toBe('问候分支')

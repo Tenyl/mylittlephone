@@ -18,6 +18,8 @@ import {
   loadBundledDefaults,
   seedBundledDefaults,
 } from './default-content'
+import { assemblePrompt } from './prompt-assembler'
+import { buildPresetGenerationOptions } from './preset-request'
 import type { CharacterCard } from './types'
 
 const existingCharacter: CharacterCard = {
@@ -50,6 +52,42 @@ describe('bundled default content', () => {
     expect(defaults.character.avatar).toMatch(/^data:image\/png;base64,/)
     expect(defaults.preset).toMatchObject({ id: BUNDLED_PRESET_ID, name: '默认预设' })
     expect(defaults.preset.settings.prompts).toBeInstanceOf(Array)
+    expect(buildPresetGenerationOptions(defaults.preset.settings)).toEqual({
+      temperature: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      top_p: 1,
+      top_k: 0,
+      top_a: 0,
+      min_p: 0,
+      repetition_penalty: 1,
+      max_tokens: 65535,
+      n: 1,
+      reasoning_effort: 'high',
+    })
+  })
+
+  it('assembles the bundled grouped prompt order with the Rosmontis role definition', async () => {
+    const bytes = await readFile(resolve(process.cwd(), 'assets/character/迷迭香.png'))
+    const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+    const defaults = await loadBundledDefaults(async () => new Response(body, {
+      status: 200,
+      headers: { 'Content-Type': 'image/png' },
+    }))
+
+    const assembled = assemblePrompt({
+      userInput: '你今天做了什么？',
+      history: [],
+      preset: defaults.preset,
+      lorebooks: [],
+      userName: '用户',
+      characterName: defaults.character.name,
+      character: defaults.character,
+    })
+
+    expect(assembled.systemPrompt).toContain('私人移动终端')
+    expect(assembled.systemPrompt).toContain('你将始终扮演“迷迭香”迷迭香')
+    expect(assembled.systemPrompt).toContain("Write 迷迭香's next reply")
   })
 
   it('seeds a fresh database with an active chat while keeping every API field empty', async () => {

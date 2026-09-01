@@ -27,6 +27,31 @@ export interface AssembleResult {
   systemPrompt: string;
 }
 
+interface PromptOrderItem {
+  identifier: string;
+  name?: string;
+  role?: 'system' | 'user' | 'assistant';
+  enabled?: boolean;
+}
+
+function normalizePromptOrder(value: unknown): PromptOrderItem[] {
+  if (!Array.isArray(value)) return [];
+  const flatItems = value.filter((item): item is PromptOrderItem => (
+    Boolean(item) && typeof item === 'object' && typeof (item as PromptOrderItem).identifier === 'string'
+  ));
+  if (flatItems.length > 0) return flatItems;
+
+  const preferredGroup = value.find((item) => (
+    Boolean(item) && typeof item === 'object' && (item as { character_id?: number }).character_id === 100000
+      && Array.isArray((item as { order?: unknown }).order)
+  ));
+  const firstGroup = preferredGroup ?? value.find((item) => (
+    Boolean(item) && typeof item === 'object' && Array.isArray((item as { order?: unknown }).order)
+  ));
+  if (!firstGroup) return [];
+  return normalizePromptOrder((firstGroup as { order: unknown }).order);
+}
+
 export function assemblePrompt(options: AssembleOptions): AssembleResult {
   const { userInput, history, preset, lorebooks, userName, characterName, character, variables, extraVariables, formatPrompt, includeFirstMessage } = options;
 
@@ -56,12 +81,7 @@ export function assemblePrompt(options: AssembleOptions): AssembleResult {
     currentTokens += msgTokens;
   }
 
-  const configuredPromptOrder = (preset.settings.prompt_order || []) as Array<{
-    identifier: string;
-    name?: string;
-    role?: 'system' | 'user' | 'assistant';
-    enabled?: boolean;
-  }>;
+  const configuredPromptOrder = normalizePromptOrder(preset.settings.prompt_order);
   const promptOrder = configuredPromptOrder.length > 0
     ? configuredPromptOrder
     : DEFAULT_PROMPT_ORDER.map((item) => ({ ...item, enabled: true }));

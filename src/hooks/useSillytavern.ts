@@ -36,6 +36,7 @@ import {
 import { createDefaultLorebook } from '../sillytavern/editor-utils';
 import { importCharacterFile } from '../sillytavern/character-importer';
 import { assemblePrompt, replaceMacros } from '../sillytavern/prompt-assembler';
+import { buildPresetGenerationOptions } from '../sillytavern/preset-request';
 import { getSetupReadiness } from '../sillytavern/readiness';
 import { applyParsedToChat, extractVariables, mergeVariables } from '../sillytavern/variables';
 import { removeLegacyDemoState } from '../sillytavern/legacy-cleanup';
@@ -432,6 +433,7 @@ export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = lo
       const apiUsed = await router.sendStream({
         task: 'story',
         messages: assembled.messages,
+        generationOptions: buildPresetGenerationOptions(activePreset.settings),
         onChunk: (delta) => {
           raw += delta;
           parser.feed(delta);

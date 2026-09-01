@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { createApiRouter, type ApiRouter } from '../sillytavern/api-router';
 import type { ApiSettings, ApiTarget, Task } from '../sillytavern/types';
+import type { ChatGenerationOptions } from '../sillytavern/preset-request';
 
 export interface SendStreamArgs {
   task: Task;
   messages: Array<{ role: string; content: string }>;
+  generationOptions?: ChatGenerationOptions;
   onChunk: (text: string) => void;
 }
 
@@ -15,8 +17,13 @@ export function useApiRouter(api: ApiSettings) {
   const sendStream = useCallback(async (args: SendStreamArgs): Promise<ApiTarget> => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
-    const { task, messages, onChunk } = args;
-    const { response, targetUsed } = await router.call(task, { messages, stream: true, signal: abortRef.current.signal });
+    const { task, messages, generationOptions, onChunk } = args;
+    const { response, targetUsed } = await router.call(task, {
+      ...generationOptions,
+      messages,
+      stream: true,
+      signal: abortRef.current.signal,
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const reader = response.body?.getReader();
     if (!reader) throw new Error('No body');

@@ -6,6 +6,7 @@ export * from './types';
 export * from './database';
 export * from './lorebook-engine';
 export * from './prompt-assembler';
+export * from './preset-request';
 export * from './importer';
 export * from './character-importer';
 export * from './readiness';
