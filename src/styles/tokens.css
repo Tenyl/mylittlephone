@@ -1,0 +1,27 @@
+:root {
+  color-scheme: light;
+  --font-sans: Inter, "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  --bg-canvas: #eaf1f8;
+  --surface: rgba(250, 252, 255, 0.86);
+  --surface-solid: #f8fbff;
+  --surface-soft: #eef4fa;
+  --surface-muted: #e5edf5;
+  --ink: #182232;
+  --ink-soft: #536275;
+  --ink-faint: #7b899a;
+  --line: rgba(68, 91, 119, 0.14);
+  --primary: #397cf6;
+  --primary-deep: #2465dd;
+  --primary-soft: #e1edff;
+  --violet: #7667f5;
+  --mint: #2aa899;
+  --danger: #d84f68;
+  --warning: #d68531;
+  --success: #238b75;
+  --shadow-window: 0 32px 80px rgba(36, 62, 92, 0.18), 0 2px 12px rgba(31, 52, 79, 0.08);
+  --shadow-float: 0 16px 44px rgba(41, 71, 105, 0.18);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --ease-spring: cubic-bezier(.2, .8, .2, 1);
+}
