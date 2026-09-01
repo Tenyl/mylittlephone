@@ -186,6 +186,27 @@ export function useSillytavern() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const reloadData = useCallback(async () => {
+    setStatus('loading');
+    await initializeDatabase();
+    const [loadedCharacters, loadedLorebooks, loadedPresets, storedSettings, loadedChats] = await Promise.all([
+      getCharacters(), getLorebooks(), getPresets(), getSettings(), getChats(),
+    ]);
+    const nextSettings = mergeStoredSettings(storedSettings);
+    if (!loadedCharacters.some((item) => item.id === nextSettings.activeCharacterId)) nextSettings.activeCharacterId = null;
+    if (!loadedPresets.some((item) => item.id === nextSettings.activePresetId)) nextSettings.activePresetId = null;
+    nextSettings.activeLorebookIds = nextSettings.activeLorebookIds.filter((bookId) => loadedLorebooks.some((item) => item.id === bookId));
+    if (!loadedChats.some((item) => item.id === nextSettings.activeChatId)) nextSettings.activeChatId = null;
+    await saveSettings(nextSettings);
+    setCharacters(loadedCharacters);
+    setLorebooks(loadedLorebooks);
+    setPresets(loadedPresets);
+    setChats(loadedChats.sort((a, b) => b.updatedAt - a.updatedAt));
+    setSettings(nextSettings);
+    setError(null);
+    setStatus('ready');
+  }, []);
+
   const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
     if (!settings) return;
     const next = mergeStoredSettings({ ...settings, ...patch });
@@ -566,7 +587,7 @@ export function useSillytavern() {
     createChat, selectChat, renameChat, removeChat,
     sendMessage, sendGameMessage, stopGeneration, abortStream: stopGeneration,
     deleteMessage, editMessage, editAndRegenerate, deleteFromMessage, rollbackTo, jumpToFloor, regenerateLast, branchFromMessage,
-    setChatVariables, resetAllData,
+    setChatVariables, resetAllData, reloadData,
     openSettings: () => setShowSettings(true), openCharacters: () => setShowCharacters(true), openLorebooks: () => setShowLorebooks(true), openPresets: () => setShowPresets(true), openVariables: () => setShowVariables(true), openHistory: () => setShowHistory(true),
     showSettings, setShowSettings, showCharacters, setShowCharacters, showLorebooks, setShowLorebooks, showPresets, setShowPresets, showVariables, setShowVariables, showHistory, setShowHistory,
     toast, showToast,

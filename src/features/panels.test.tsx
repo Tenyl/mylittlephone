@@ -2,64 +2,85 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
+import { clearAllData } from '../sillytavern/database'
 
-describe('configuration panels', () => {
-  beforeEach(() => localStorage.clear())
+const v2Card = {
+  spec: 'chara_card_v2', spec_version: '2.0',
+  data: {
+    name: '顾遥', description: '长期记录城市夜景。', personality: '克制而敏锐。', scenario: '雨夜旧城。',
+    first_mes: '窗外开始下雨了。', mes_example: '', creator_notes: '', system_prompt: '', post_history_instructions: '',
+    alternate_greetings: [], tags: ['都市'], creator: '用户', character_version: '1.0', extensions: {},
+  },
+}
 
-  it('opens the character card with complete imported metadata', async () => {
-    const user = userEvent.setup()
-    render(<App streamDelayMs={0} />)
-
-    await user.click(screen.getByRole('button', { name: '角色卡' }))
-
-    const dialog = screen.getByRole('dialog', { name: '角色卡' })
-    expect(within(dialog).getByText('旧城书店的夜班店员')).toBeInTheDocument()
-    expect(within(dialog).getByText('林予泽_角色卡.json')).toBeInTheDocument()
+describe('empty-first configuration panels', () => {
+  beforeEach(async () => {
+    localStorage.clear()
+    await clearAllData()
   })
 
-  it('uses the imported character name in the message composer', async () => {
+  it('imports a Character Card V2 JSON and updates readiness', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
-    render(<App streamDelayMs={0} />)
-    await user.click(screen.getByRole('button', { name: '角色卡' }))
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: '角色卡' }))
+    const dialog = screen.getByRole('dialog', { name: '角色卡库' })
+    expect(within(dialog).getByRole('heading', { name: '角色卡库还是空的' })).toBeInTheDocument()
 
-    const input = document.querySelector<HTMLInputElement>('#import-character-file')!
-    await user.upload(input, new File([
-      JSON.stringify({ name: '顾遥', bio: '长期记录城市夜景。' }),
+    await user.upload(document.querySelector<HTMLInputElement>('#import-character-file')!, new File([
+      JSON.stringify(v2Card),
     ], '顾遥.json', { type: 'application/json' }))
 
-    await waitFor(() => expect(screen.getByLabelText('输入聊天消息')).toHaveAttribute('placeholder', '发消息给顾遥'))
+    expect(await within(dialog).findByRole('heading', { name: '顾遥' })).toBeInTheDocument()
+    expect(within(dialog).getByText('顾遥.json')).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+    expect(screen.getByText('已选择 顾遥')).toBeInTheDocument()
   })
 
-  it('switches presets and announces when the change takes effect', async () => {
-    const user = userEvent.setup()
-    render(<App streamDelayMs={0} />)
-    await user.click(screen.getByRole('button', { name: '对话预设' }))
+  it('imports and enables a SillyTavern world book', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: '世界书' }))
+    const input = document.querySelector<HTMLInputElement>('#import-worldbook-file')!
+    await user.upload(input, new File([JSON.stringify({
+      name: '雨城档案', description: '城市背景', entries: {
+        0: { uid: 0, key: ['旧城'], keysecondary: [], comment: '旧城区', content: '每天午夜封路。', constant: false, selective: false, selectiveLogic: 0, addMemo: true, order: 100, position: 0, role: 0, disable: false, probability: 100, depth: 4, group: '', useProbability: true, excluded: false, sticky: 0, cooldown: 0, delay: 0, weight: 100, scanDepth: 2, caseSensitive: false, matchWholeWords: false, excludeRecursion: false, preventRecursion: false, useGroupScoring: false, matchPersonaDescription: false, matchCharacterDescription: false, matchCharacterPersonality: false, matchCharacterDepthPrompt: false, matchScenario: false, matchCreatorNotes: false, decorators: [], characterFilter: {} },
+      },
+    })], '雨城.json', { type: 'application/json' }))
 
-    await user.click(screen.getByRole('button', { name: '选择沉浸扮演' }))
-
-    expect(screen.getByText('预设已切换')).toBeInTheDocument()
-    expect(screen.getByText('“沉浸扮演”将在下一条消息中生效。')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '雨城档案' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /展开旧城区/ }))
+    expect(screen.getByText('每天午夜封路。')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '停用世界书' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '停用世界书' }))
+    expect(screen.getByRole('button', { name: '启用世界书' })).toBeInTheDocument()
   })
 
-  it('expands and disables a world-book entry', async () => {
-    const user = userEvent.setup()
-    render(<App streamDelayMs={0} />)
-    await user.click(screen.getByRole('button', { name: '世界书' }))
+  it('imports and activates a SillyTavern response preset', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: '对话预设' }))
+    await user.upload(document.querySelector<HTMLInputElement>('#import-preset-file')!, new File([
+      JSON.stringify({ name: '沉浸扮演', main: '扮演 {{char}}。', temp_openai: 0.7, openai_max_tokens: 2048 }),
+    ], '沉浸扮演.json', { type: 'application/json' }))
 
-    await user.click(screen.getByRole('button', { name: '展开白鲸书屋' }))
-    expect(screen.getByText(/凌晨一点打烊/)).toBeInTheDocument()
-    await user.click(screen.getByRole('switch', { name: '启用白鲸书屋' }))
-    expect(screen.getByRole('switch', { name: '启用白鲸书屋' })).toHaveAttribute('aria-checked', 'false')
+    expect(await screen.findByRole('heading', { name: '沉浸扮演' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '正在使用' })).toBeDisabled()
+    expect(screen.getByText('预设已导入')).toBeInTheDocument()
   })
 
-  it('requires an in-app confirmation before clearing the conversation', async () => {
+  it('requires two in-app confirmations before clearing all local data', async () => {
     const user = userEvent.setup()
-    render(<App streamDelayMs={0} />)
-    await user.click(screen.getByRole('button', { name: '会话详情' }))
-    await user.click(screen.getByRole('button', { name: '清空当前会话' }))
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: '系统设置' }))
+    await user.click(screen.getByRole('button', { name: '本地数据' }))
+    await user.click(screen.getByRole('button', { name: /清除所有本地数据/ }))
 
-    const confirmation = screen.getByRole('alertdialog', { name: '清空当前会话？' })
-    await user.click(within(confirmation).getByRole('button', { name: '确认清空' }))
-    expect(screen.getByText('对话已经清空')).toBeInTheDocument()
+    const first = screen.getByRole('alertdialog', { name: '清除所有本地内容？' })
+    await user.click(within(first).getByRole('button', { name: '继续确认' }))
+    const second = await screen.findByRole('alertdialog', { name: '最后确认清空？' })
+    await user.click(within(second).getByRole('button', { name: '永久清空' }))
+
+    await waitFor(() => expect(screen.getByText('本地内容已清空')).toBeInTheDocument())
+    expect(screen.getByRole('heading', { name: '从一张角色卡开始' })).toBeInTheDocument()
   })
 })

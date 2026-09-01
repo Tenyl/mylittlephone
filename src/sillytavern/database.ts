@@ -130,7 +130,14 @@ export async function exportAllData(): Promise<FullBackup> {
     characters,
     lorebooks,
     presets,
-    settings,
+    settings: settings.map((setting) => ({
+      ...setting,
+      api: {
+        ...setting.api,
+        apiKey: '',
+        secondary: setting.api.secondary ? { ...setting.api.secondary, apiKey: '' } : undefined,
+      },
+    })),
     chats,
   };
 }
@@ -140,6 +147,19 @@ export async function importAllData(backup: FullBackup): Promise<void> {
     throw new Error('备份格式无效');
   }
   const db = getDatabase();
+  const currentSettings = await getSettings();
+  const incomingSettings = Array.isArray(backup.settings)
+    ? backup.settings.map((setting) => ({
+        ...setting,
+        api: {
+          ...setting.api,
+          apiKey: currentSettings?.api.apiKey ?? '',
+          secondary: setting.api.secondary
+            ? { ...setting.api.secondary, apiKey: currentSettings?.api.secondary?.apiKey ?? '' }
+            : undefined,
+        },
+      }))
+    : [];
   await db.transaction('rw', db.characters, db.lorebooks, db.presets, db.settings, db.chats, async () => {
     await db.characters.clear();
     await db.lorebooks.clear();
@@ -149,9 +169,10 @@ export async function importAllData(backup: FullBackup): Promise<void> {
     if (Array.isArray(backup.characters)) await db.characters.bulkPut(backup.characters);
     if (Array.isArray(backup.lorebooks)) await db.lorebooks.bulkPut(backup.lorebooks);
     if (Array.isArray(backup.presets)) await db.presets.bulkPut(backup.presets);
-    if (Array.isArray(backup.settings)) await db.settings.bulkPut(backup.settings);
+    if (incomingSettings.length > 0) await db.settings.bulkPut(incomingSettings);
     if (Array.isArray(backup.chats)) await db.chats.bulkPut(backup.chats);
   });
+  if (await db.settings.count() === 0) await db.settings.put(getEmptyFirstSettings());
 }
 
 export async function getCharacters(): Promise<CharacterCard[]> {
