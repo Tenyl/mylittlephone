@@ -43,6 +43,8 @@ export function CharacterPanel({ characters, activeCharacterId, onSelect, onImpo
         <div className="library-list" aria-label="角色卡列表">
           {characters.map((character) => {
             const active = character.id === activeCharacterId
+            const bundled = character.id === BUNDLED_CHARACTER_ID
+              && character.extensions.mylittlephone_builtin === true
             return (
               <button
                 id={`character-library-item-${character.id}`}
@@ -53,7 +55,7 @@ export function CharacterPanel({ characters, activeCharacterId, onSelect, onImpo
                 onClick={() => setSelectedId(character.id)}
               >
                 <Avatar character={character} />
-                <span><strong>{character.name}</strong><small>{character.tags.slice(0, 2).join(' · ') || 'Character Card V2'}</small></span>
+                <span><strong>{character.name}</strong>{!bundled && <small>{character.tags.slice(0, 2).join(' · ') || 'Character Card V2'}</small>}</span>
                 {active && <Check size={17} weight="bold" aria-label="当前启用" />}
               </button>
             )
@@ -69,7 +71,7 @@ export function CharacterPanel({ characters, activeCharacterId, onSelect, onImpo
             <div>
               <span className="active-badge"><i />{selected.id === activeCharacterId ? '当前启用' : '角色预览'}</span>
               <h3>{selected.name}</h3>
-              <p>{selected.creator ? `由 ${selected.creator} 创建` : `版本 ${selected.characterVersion || selected.specVersion}`}</p>
+              {!isBundledCharacter && <p>{selected.creator ? `由 ${selected.creator} 创建` : `版本 ${selected.characterVersion || selected.specVersion}`}</p>}
             </div>
           </section>
           {!isBundledCharacter && (

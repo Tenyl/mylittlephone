@@ -37,6 +37,8 @@ describe('configuration panels with bundled defaults', () => {
     expect(within(dialog).queryByText('导入时间')).not.toBeInTheDocument()
     expect(within(dialog).queryByRole('button', { name: '删除角色卡' })).not.toBeInTheDocument()
     expect(within(dialog).queryByText('罗德岛精英干员。')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('明日方舟')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/版本/)).not.toBeInTheDocument()
 
     await user.upload(document.querySelector<HTMLInputElement>('#import-character-file')!, new File([
       JSON.stringify(v2Card),
