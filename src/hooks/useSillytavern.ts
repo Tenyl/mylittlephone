@@ -39,6 +39,7 @@ import { assemblePrompt, replaceMacros } from '../sillytavern/prompt-assembler';
 import { getSetupReadiness } from '../sillytavern/readiness';
 import { applyParsedToChat, extractVariables, mergeVariables } from '../sillytavern/variables';
 import { removeLegacyDemoState } from '../sillytavern/legacy-cleanup';
+import { loadBundledDefaults, seedBundledDefaults, type BundledDefaultsLoader } from '../sillytavern/default-content';
 
 type ControllerStatus = 'loading' | 'ready' | 'error';
 type GenerationStatus = 'idle' | 'streaming' | 'error';
@@ -85,7 +86,7 @@ function restoredVariables(messages: ChatMessage[], fallback: Record<string, unk
   return structuredClone(fallback);
 }
 
-export function useSillytavern() {
+export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = loadBundledDefaults) {
   const [status, setStatus] = useState<ControllerStatus>('loading');
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -144,6 +145,7 @@ export function useSillytavern() {
       try {
         if (typeof window !== 'undefined') removeLegacyDemoState(window.localStorage);
         await initializeDatabase();
+        await seedBundledDefaults(bundledDefaultsLoader);
         const [loadedCharacters, loadedLorebooks, loadedPresets, storedSettings, loadedChats] = await Promise.all([
           getCharacters(), getLorebooks(), getPresets(), getSettings(), getChats(),
         ]);
@@ -552,14 +554,17 @@ export function useSillytavern() {
     router.abort();
     await clearAllData();
     await initializeDatabase();
-    const nextSettings = getEmptyFirstSettings();
-    setCharacters([]);
-    setLorebooks([]);
-    setPresets([]);
-    setChats([]);
-    setSettings(nextSettings);
+    await seedBundledDefaults(bundledDefaultsLoader);
+    const [nextCharacters, nextLorebooks, nextPresets, nextSettings, nextChats] = await Promise.all([
+      getCharacters(), getLorebooks(), getPresets(), getSettings(), getChats(),
+    ]);
+    setCharacters(nextCharacters);
+    setLorebooks(nextLorebooks);
+    setPresets(nextPresets);
+    setChats(nextChats.sort((a, b) => b.updatedAt - a.updatedAt));
+    setSettings(nextSettings ? mergeStoredSettings(nextSettings) : getEmptyFirstSettings());
     setGeneration({ status: 'idle', messageId: null, error: null });
-  }, [router]);
+  }, [bundledDefaultsLoader, router]);
 
   return {
     status, error, initialized: status !== 'loading', settings,

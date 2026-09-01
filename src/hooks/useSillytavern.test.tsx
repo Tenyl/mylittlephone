@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearAllData } from '../sillytavern/database'
+import { BUNDLED_CHARACTER_ID, BUNDLED_PRESET_ID, type BundledDefaultsLoader } from '../sillytavern/default-content'
 import type { CharacterCard, ChatPreset } from '../sillytavern/types'
 import { useSillytavern } from './useSillytavern'
 
@@ -40,6 +41,11 @@ const preset: ChatPreset = {
   updatedAt: 1,
 }
 
+const bundledDefaultsLoader: BundledDefaultsLoader = async () => ({
+  character: { ...character, id: BUNDLED_CHARACTER_ID, name: '迷迭香', firstMes: '嗯...我在。', sourceFile: '迷迭香.png' },
+  preset: { ...preset, id: BUNDLED_PRESET_ID, name: '默认预设' },
+})
+
 async function prepareController(result: { current: ReturnType<typeof useSillytavern> }) {
   await act(async () => result.current.addCharacter(character))
   await act(async () => result.current.addPreset(preset))
@@ -64,20 +70,22 @@ describe('useSillytavern controller', () => {
     vi.restoreAllMocks()
   })
 
-  it('boots with empty user-owned libraries', async () => {
-    const { result } = renderHook(() => useSillytavern())
+  it('boots directly into the bundled Rosmontis chat while leaving API settings empty', async () => {
+    const { result } = renderHook(() => useSillytavern(bundledDefaultsLoader))
     await waitFor(() => expect(result.current.initialized).toBe(true))
 
-    expect(result.current.characters).toEqual([])
+    expect(result.current.characters).toHaveLength(1)
+    expect(result.current.activeCharacter?.name).toBe('迷迭香')
     expect(result.current.lorebooks).toEqual([])
-    expect(result.current.presets).toEqual([])
-    expect(result.current.chats).toEqual([])
-    expect(result.current.activeChat).toBeNull()
-    expect(result.current.readiness.canStartChat).toBe(false)
+    expect(result.current.activePreset?.name).toBe('默认预设')
+    expect(result.current.activeChat?.messages[0]?.content).toBe('嗯...我在。')
+    expect(result.current.settings?.api).toMatchObject({ baseUrl: '', apiKey: '', model: '' })
+    expect(result.current.readiness.canStartChat).toBe(true)
+    expect(result.current.readiness.canSend).toBe(false)
   })
 
   it('persists active imports and a newly created chat across remounts', async () => {
-    const first = renderHook(() => useSillytavern())
+    const first = renderHook(() => useSillytavern(bundledDefaultsLoader))
     await waitFor(() => expect(first.result.current.initialized).toBe(true))
     await prepareController(first.result)
 
@@ -85,7 +93,7 @@ describe('useSillytavern controller', () => {
     await waitFor(() => expect(first.result.current.activeChat?.messages[0]?.content).toBe('晚上好。'))
     first.unmount()
 
-    const second = renderHook(() => useSillytavern())
+    const second = renderHook(() => useSillytavern(bundledDefaultsLoader))
     await waitFor(() => expect(second.result.current.initialized).toBe(true))
     expect(second.result.current.activeCharacter?.name).toBe('白露')
     expect(second.result.current.activePreset?.name).toBe('日常聊天')
@@ -106,7 +114,7 @@ describe('useSillytavern controller', () => {
       headers: { 'Content-Type': 'text/event-stream' },
     }))
 
-    const { result } = renderHook(() => useSillytavern())
+    const { result } = renderHook(() => useSillytavern(bundledDefaultsLoader))
     await waitFor(() => expect(result.current.initialized).toBe(true))
     await prepareController(result)
     await act(async () => result.current.createChat('测试会话'))
@@ -122,5 +130,17 @@ describe('useSillytavern controller', () => {
     await act(async () => result.current.branchFromMessage(assistant!.id, '问候分支'))
     expect(result.current.activeChat?.name).toBe('问候分支')
     expect(result.current.activeChat?.parentChatId).toBeTruthy()
+  })
+
+  it('restores the bundled conversation after clearing all local data', async () => {
+    const { result } = renderHook(() => useSillytavern(bundledDefaultsLoader))
+    await waitFor(() => expect(result.current.activeCharacter?.name).toBe('迷迭香'))
+
+    await act(async () => result.current.resetAllData())
+
+    await waitFor(() => expect(result.current.activeCharacter?.name).toBe('迷迭香'))
+    expect(result.current.activePreset?.name).toBe('默认预设')
+    expect(result.current.activeChat?.messages[0]?.content).toBe('嗯...我在。')
+    expect(result.current.settings?.api).toMatchObject({ baseUrl: '', apiKey: '', model: '' })
   })
 })

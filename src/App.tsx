@@ -13,13 +13,17 @@ import { VariablesPanel } from './features/variables/VariablesPanel'
 import { WorldBookPanel } from './features/worldbook/WorldBookPanel'
 import { useSillytavern } from './hooks/useSillytavern'
 import { exportAllData, importAllData, type FullBackup } from './sillytavern/database'
+import type { BundledDefaultsLoader } from './sillytavern/default-content'
 import type { CharacterCard, ChatMessage, ChatPreset, ChatSession, Lorebook } from './sillytavern/types'
 import './styles/tokens.css'
 import './styles/global.css'
 import './styles/app.css'
 import './styles/sillytavern.css'
 
-interface AppProps { streamDelayMs?: number }
+interface AppProps {
+  streamDelayMs?: number
+  bundledDefaultsLoader?: BundledDefaultsLoader
+}
 
 type Confirmation =
   | { kind: 'delete-character'; item: CharacterCard }
@@ -38,8 +42,8 @@ type FormState =
 
 const noticeId = () => `notice-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 
-export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
-  const chat = useSillytavern()
+export default function App({ streamDelayMs: _streamDelayMs, bundledDefaultsLoader }: AppProps) {
+  const chat = useSillytavern(bundledDefaultsLoader)
   const [activePanel, setActivePanel] = useState<PanelId | 'home' | 'data' | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [form, setForm] = useState<FormState | null>(null)
@@ -52,6 +56,14 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
   }, [])
 
   const fileError = useCallback((message: string) => pushNotice('error', '导入未完成', message), [pushNotice])
+
+  const sendChatMessage = async (content: string) => {
+    if (!chat.readiness.canSend) {
+      pushNotice('warning', '还不能发送消息', '请打开右上角齿轮，在“主 API”中填写地址、密钥和模型。')
+      return false
+    }
+    return chat.sendGameMessage(content)
+  }
 
   const createChat = async () => {
     try {
@@ -87,7 +99,7 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
     if (!confirmation) return
     if (confirmation.kind === 'clear-first') { setConfirmation({ kind: 'clear-final' }); return }
     if (confirmation.kind === 'clear-final') {
-      await chat.resetAllData(); setConfirmation(null); setActivePanel(null); pushNotice('success', '本地内容已清空', '现在可以从自己的角色卡重新开始。'); return
+      await chat.resetAllData(); setConfirmation(null); setActivePanel(null); pushNotice('success', '本地内容已清空', '默认角色卡、预设与迷迭香会话已恢复。'); return
     }
     if (confirmation.kind === 'import-backup') {
       await importAllData(confirmation.backup); await chat.reloadData(); setConfirmation(null); setActivePanel(null); pushNotice('success', '备份已导入', '内容库与会话已从本地备份恢复。'); return
@@ -106,8 +118,8 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
     if (confirmation.kind === 'delete-preset') return { title: '删除对话预设？', description: `“${confirmation.item.name}”会从本机移除，已有消息不会改变。`, label: '删除预设' }
     if (confirmation.kind === 'delete-chat') return { title: '删除整个会话？', description: `“${confirmation.item.name}”中的 ${confirmation.item.messages.length} 条消息与变量快照将被删除。`, label: '删除会话' }
     if (confirmation.kind === 'delete-from-message') return { title: '从这里截断会话？', description: `将删除当前消息以及后续共 ${confirmation.count} 条消息，并恢复此前的变量快照。`, label: '确认截断' }
-    if (confirmation.kind === 'clear-first') return { title: '清除所有本地内容？', description: '此操作会删除角色卡、世界书、预设、会话和设置。下一步还会要求再次确认。', label: '继续确认' }
-    if (confirmation.kind === 'clear-final') return { title: '最后确认清空？', description: '清除后无法自动恢复。建议先导出安全备份。', label: '永久清空' }
+    if (confirmation.kind === 'clear-first') return { title: '清除所有自定义内容？', description: '此操作会删除角色卡、世界书、预设、会话和设置，并恢复内置默认内容。下一步还会要求再次确认。', label: '继续确认' }
+    if (confirmation.kind === 'clear-final') return { title: '最后确认重置？', description: '自定义内容无法自动恢复，内置的迷迭香角色、默认预设和初始会话会重新载入。建议先导出安全备份。', label: '确认重置' }
     const backup = confirmation.backup
     return { title: '导入并覆盖本地内容？', description: `备份包含 ${backup.characters?.length ?? 0} 张角色卡、${backup.lorebooks?.length ?? 0} 本世界书、${backup.presets?.length ?? 0} 份预设与 ${backup.chats?.length ?? 0} 个会话。现有 API 密钥会保留。`, label: '导入备份' }
   })() : null
@@ -135,7 +147,7 @@ export default function App({ streamDelayMs: _streamDelayMs }: AppProps) {
 
   return (
     <>
-      <AppShell activeCharacter={chat.activeCharacter} activeChat={chat.activeChat} readiness={chat.readiness} generating={chat.generation.status === 'streaming'} onOpenPanel={setActivePanel} onOpenManagement={() => setActivePanel('home')} onStart={() => void createChat()} onSend={chat.sendGameMessage} onStop={chat.stopGeneration} onRegenerate={chat.regenerateLast} onEditMessage={(item) => setForm({ kind: 'edit-message', item })} onDeleteFromMessage={(item) => { if (chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onBranchMessage={(item) => setForm({ kind: 'branch-message', item })} />
+      <AppShell activeCharacter={chat.activeCharacter} activeChat={chat.activeChat} readiness={chat.readiness} generating={chat.generation.status === 'streaming'} onOpenPanel={setActivePanel} onOpenManagement={() => setActivePanel('home')} onStart={() => void createChat()} onSend={sendChatMessage} onStop={chat.stopGeneration} onRegenerate={chat.regenerateLast} onEditMessage={(item) => setForm({ kind: 'edit-message', item })} onDeleteFromMessage={(item) => { if (chat.activeChat) setConfirmation({ kind: 'delete-from-message', item, count: chat.activeChat.messages.length - chat.activeChat.messages.indexOf(item) }) }} onBranchMessage={(item) => setForm({ kind: 'branch-message', item })} />
       {panel}
       <ToastRegion notices={notices} onDismiss={(id) => setNotices((current) => current.filter((notice) => notice.id !== id))} />
       {confirmation && confirmationCopy && <ConfirmDialog title={confirmationCopy.title} description={confirmationCopy.description} confirmLabel={confirmationCopy.label} onCancel={() => setConfirmation(null)} onConfirm={() => void executeConfirmation()} />}

@@ -94,7 +94,7 @@ export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, on
           <div className="settings-heading"><span><FloppyDisk size={22} /></span><div><h3 id="data-settings-heading">本地数据</h3><p>角色、世界书、预设和聊天全部保存在此浏览器的 IndexedDB。</p></div></div>
           <button id="settings-export-backup" type="button" onClick={() => void onExport()}><FloppyDisk size={18} /><span><strong>导出安全备份</strong><small>不会包含主次 API 密钥</small></span></button>
           <label className="data-import" htmlFor="settings-import-backup"><input id="settings-import-backup" type="file" accept="application/json,.json" onChange={(event) => { const file = event.target.files?.[0]; if (file) void onImport(file) }} /><FloppyDisk size={18} /><span><strong>导入完整备份</strong><small>覆盖前会显示影响范围</small></span></label>
-          <button id="settings-clear-all" className="danger-action" type="button" onClick={onRequestClear}><Trash size={18} /><span><strong>清除所有本地数据</strong><small>角色卡、世界书、预设与对话都会被删除</small></span></button>
+          <button id="settings-clear-all" className="danger-action" type="button" onClick={onRequestClear}><Trash size={18} /><span><strong>清除自定义本地数据</strong><small>删除现有内容后恢复内置角色、预设与初始会话</small></span></button>
         </section>
       )}
     </div>

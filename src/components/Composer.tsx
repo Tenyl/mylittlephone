@@ -19,7 +19,8 @@ export function Composer({ characterName, generating, onSend, onStop }: Composer
     setValue('')
     setSending(true)
     try {
-      await onSend(outgoing)
+      const accepted = await onSend(outgoing)
+      if (!accepted) setValue(outgoing)
       inputRef.current?.focus()
     } catch (cause) {
       setValue(outgoing)

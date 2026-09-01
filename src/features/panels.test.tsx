@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
 import { clearAllData } from '../sillytavern/database'
+import { testBundledDefaultsLoader } from '../test/bundled-defaults'
 
 const v2Card = {
   spec: 'chara_card_v2', spec_version: '2.0',
@@ -19,7 +20,7 @@ async function openManagementSection(user: ReturnType<typeof userEvent.setup>, n
   await user.click(within(center).getByRole('button', { name }))
 }
 
-describe('empty-first configuration panels', () => {
+describe('configuration panels with bundled defaults', () => {
   beforeEach(async () => {
     localStorage.clear()
     await clearAllData()
@@ -27,10 +28,10 @@ describe('empty-first configuration panels', () => {
 
   it('imports a Character Card V2 JSON and updates readiness', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
-    render(<App />)
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     await openManagementSection(user, /角色卡/)
     const dialog = screen.getByRole('dialog', { name: '角色卡库' })
-    expect(within(dialog).getByRole('heading', { name: '角色卡库还是空的' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('heading', { name: '迷迭香', level: 3 })).toBeInTheDocument()
 
     await user.upload(document.querySelector<HTMLInputElement>('#import-character-file')!, new File([
       JSON.stringify(v2Card),
@@ -44,7 +45,7 @@ describe('empty-first configuration panels', () => {
 
   it('imports and enables a SillyTavern world book', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
-    render(<App />)
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     await openManagementSection(user, /世界书/)
     const input = document.querySelector<HTMLInputElement>('#import-worldbook-file')!
     await user.upload(input, new File([JSON.stringify({
@@ -71,7 +72,7 @@ describe('empty-first configuration panels', () => {
 
   it('imports and activates a SillyTavern response preset', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
-    render(<App />)
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     await openManagementSection(user, /对话预设/)
     await user.upload(document.querySelector<HTMLInputElement>('#import-preset-file')!, new File([
       JSON.stringify({ name: '沉浸扮演', main: '扮演 {{char}}。', temp_openai: 0.7, openai_max_tokens: 2048 }),
@@ -94,17 +95,18 @@ describe('empty-first configuration panels', () => {
 
   it('requires two in-app confirmations before clearing all local data', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     await openManagementSection(user, /API 与设置/)
     await user.click(screen.getByRole('button', { name: '本地数据' }))
-    await user.click(screen.getByRole('button', { name: /清除所有本地数据/ }))
+    await user.click(screen.getByRole('button', { name: /清除自定义本地数据/ }))
 
-    const first = screen.getByRole('alertdialog', { name: '清除所有本地内容？' })
+    const first = screen.getByRole('alertdialog', { name: '清除所有自定义内容？' })
     await user.click(within(first).getByRole('button', { name: '继续确认' }))
-    const second = await screen.findByRole('alertdialog', { name: '最后确认清空？' })
-    await user.click(within(second).getByRole('button', { name: '永久清空' }))
+    const second = await screen.findByRole('alertdialog', { name: '最后确认重置？' })
+    await user.click(within(second).getByRole('button', { name: '确认重置' }))
 
     await waitFor(() => expect(screen.getByText('本地内容已清空')).toBeInTheDocument())
-    expect(screen.getByRole('heading', { name: '从一张角色卡开始' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '迷迭香' })).toBeInTheDocument()
+    expect(screen.getByText('嗯...我在。')).toBeInTheDocument()
   })
 })

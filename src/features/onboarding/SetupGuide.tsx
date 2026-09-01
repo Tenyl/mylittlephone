@@ -34,7 +34,7 @@ export function SetupGuide({ readiness, onOpenCharacter, onOpenPreset, onOpenSet
       <header className="setup-hero">
         <span className="setup-kicker">LOCAL CHARACTER CHAT</span>
         <h1 id="setup-guide-title">从一张角色卡开始</h1>
-        <p>这里没有预置人物和剧情。导入你自己的角色、预设与世界书，再把对话交给你选择的模型。</p>
+        <p>当前没有可用的聊天对象。你可以导入自己的角色与预设，或在本地数据设置中恢复内置的迷迭香会话。</p>
       </header>
 
       <ol className="setup-steps">

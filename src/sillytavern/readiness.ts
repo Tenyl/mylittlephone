@@ -44,7 +44,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
   const primaryReady = hasPrimaryApi(input.settings);
   const secondaryRequired = input.settings.apiMode === 'dual';
   const secondaryReady = hasSecondaryApi(input.settings);
-  const canStartChat = characterReady && presetReady && primaryReady;
+  const canStartChat = characterReady && presetReady;
   const missingReasons = [
     !characterReady ? '请先导入并选择角色卡' : '',
     !presetReady ? '请先导入并选择对话预设' : '',
@@ -53,7 +53,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
 
   return {
     canStartChat,
-    canSend: canStartChat && input.hasActiveChat,
+    canSend: canStartChat && primaryReady && input.hasActiveChat,
     missingReasons,
     steps: {
       character: {

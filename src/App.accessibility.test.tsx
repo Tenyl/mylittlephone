@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from './App'
 import { clearAllData } from './sillytavern/database'
+import { testBundledDefaultsLoader } from './test/bundled-defaults'
 
 describe('accessibility contracts', () => {
   beforeEach(async () => {
@@ -12,7 +13,7 @@ describe('accessibility contracts', () => {
 
   it('closes the management center with Escape and restores focus to the gear', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     const trigger = await screen.findByRole('button', { name: '打开管理中心' })
     await user.click(trigger)
 
@@ -25,8 +26,8 @@ describe('accessibility contracts', () => {
 
   it('exposes every configuration area through one management center', async () => {
     const user = userEvent.setup()
-    render(<App />)
-    await screen.findByRole('heading', { name: '从一张角色卡开始' })
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
+    await screen.findByRole('heading', { name: '迷迭香' })
     await user.click(screen.getByRole('button', { name: '打开管理中心' }))
 
     const center = screen.getByRole('dialog', { name: '管理中心' })
@@ -40,7 +41,7 @@ describe('accessibility contracts', () => {
 
   it('moves focus to the back control when entering a management section', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
     await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /世界书/ }))
 
@@ -52,7 +53,7 @@ describe('accessibility contracts', () => {
 
   it('provides a polite live region and unique ids for interactive controls', async () => {
     const user = userEvent.setup()
-    const { container } = render(<App />)
+    const { container } = render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
     await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /世界书/ }))
 
@@ -67,7 +68,7 @@ describe('accessibility contracts', () => {
 
   it('keeps keyboard focus inside a settings dialog', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    render(<App bundledDefaultsLoader={testBundledDefaultsLoader} />)
     await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
     await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /API 与设置/ }))
     const first = screen.getByRole('button', { name: '返回管理中心' })

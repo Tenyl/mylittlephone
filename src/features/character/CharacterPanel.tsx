@@ -1,5 +1,5 @@
 import { CalendarBlank, Check, ChatCenteredText, FileText, IdentificationCard, Trash, UserFocus } from '@phosphor-icons/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FileImportControl } from '../../components/FileImportControl'
 import type { CharacterCard } from '../../sillytavern/types'
 
@@ -23,6 +23,10 @@ export function CharacterPanel({ characters, activeCharacterId, onSelect, onImpo
     () => characters.find((item) => item.id === selectedId) ?? characters.find((item) => item.id === activeCharacterId) ?? characters[0] ?? null,
     [activeCharacterId, characters, selectedId],
   )
+
+  useEffect(() => {
+    if (activeCharacterId) setSelectedId(activeCharacterId)
+  }, [activeCharacterId])
 
   return (
     <div className="character-panel library-panel">

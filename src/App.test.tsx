@@ -6,12 +6,14 @@ import {
   clearAllData,
   getEmptyFirstSettings,
   getChats,
+  getSettings,
   initializeDatabase,
   saveCharacter,
   saveChat,
   savePreset,
   saveSettings,
 } from './sillytavern/database'
+import { BUNDLED_CHARACTER_ID, BUNDLED_PRESET_ID, type BundledDefaultsLoader } from './sillytavern/default-content'
 import type { CharacterCard, ChatPreset, ChatSession } from './sillytavern/types'
 
 const character: CharacterCard = {
@@ -27,6 +29,11 @@ const preset: ChatPreset = {
   settings: { main: '扮演 {{char}}。', temp_openai: 0.8, openai_max_tokens: 2048, openai_max_context: 8192 },
   createdAt: 1, updatedAt: 1,
 }
+
+const bundledDefaultsLoader: BundledDefaultsLoader = async () => ({
+  character: { ...character, id: BUNDLED_CHARACTER_ID, name: '迷迭香', firstMes: '嗯...我在。', sourceFile: '迷迭香.png' },
+  preset: { ...preset, id: BUNDLED_PRESET_ID, name: '默认预设' },
+})
 
 async function seedReadyChat() {
   await initializeDatabase()
@@ -73,13 +80,27 @@ describe('SillyTavern character chat app', () => {
     await clearAllData()
   })
 
-  it('starts with empty libraries and an explicit setup path', async () => {
-    render(<App />)
+  it('opens the bundled Rosmontis conversation immediately with API settings still empty', async () => {
+    render(<App bundledDefaultsLoader={bundledDefaultsLoader} />)
 
-    expect(await screen.findByRole('heading', { name: '从一张角色卡开始' })).toBeInTheDocument()
-    expect(screen.getByText('这里没有预置人物和剧情。导入你自己的角色、预设与世界书，再把对话交给你选择的模型。')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /开始新会话/ })).toBeDisabled()
-    expect(screen.queryByText('林予泽')).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '迷迭香', level: 1 })).toBeInTheDocument()
+    expect(screen.getByText('嗯...我在。')).toBeInTheDocument()
+    expect(screen.getByLabelText('输入聊天消息')).toBeEnabled()
+    expect(screen.queryByRole('heading', { name: '从一张角色卡开始' })).not.toBeInTheDocument()
+    expect(await getSettings()).toMatchObject({ api: { baseUrl: '', apiKey: '', model: '' } })
+  })
+
+  it('keeps the draft and points to settings when sending before API configuration', async () => {
+    const user = userEvent.setup()
+    render(<App bundledDefaultsLoader={bundledDefaultsLoader} />)
+    const composer = await screen.findByLabelText('输入聊天消息')
+
+    await user.type(composer, '你好{Enter}')
+
+    expect(await screen.findByText('还不能发送消息')).toBeInTheDocument()
+    expect(screen.getByText('请打开右上角齿轮，在“主 API”中填写地址、密钥和模型。')).toBeInTheDocument()
+    expect(composer).toHaveValue('你好')
+    expect(within(screen.getByLabelText('聊天记录')).queryByText('你好')).not.toBeInTheDocument()
   })
 
   it('uses one immersive full-window chat shell without permanent side rails', async () => {

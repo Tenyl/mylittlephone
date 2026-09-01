@@ -6,6 +6,7 @@ import { SettingsPanel } from './SettingsPanel'
 
 function renderSettings() {
   const settings = getEmptyFirstSettings()
+  settings.apiMode = 'dual'
   settings.api = {
     ...settings.api,
     baseUrl: 'https://api.example.test/v1', apiKey: 'primary-secret', model: 'model-a',

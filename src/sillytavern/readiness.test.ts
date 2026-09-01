@@ -29,6 +29,7 @@ describe('setup readiness', () => {
       hasActiveChat: true,
       settings: {
         ...DEFAULT_SETTINGS,
+        apiMode: 'dual',
         api: { ...DEFAULT_SETTINGS.api, baseUrl: 'https://example.test/v1', apiKey: 'secret', model: 'model', secondary: undefined },
       },
     })
@@ -36,6 +37,20 @@ describe('setup readiness', () => {
     expect(readiness.canSend).toBe(true)
     expect(readiness.steps.secondaryApi.status).toBe('missing')
     expect(readiness.steps.worldbook.status).toBe('optional')
+  })
+
+  it('allows opening a chat with a character and preset before the API is configured', () => {
+    const readiness = getSetupReadiness({
+      character,
+      preset,
+      lorebookCount: 0,
+      hasActiveChat: true,
+      settings: DEFAULT_SETTINGS,
+    })
+
+    expect(readiness.canStartChat).toBe(true)
+    expect(readiness.canSend).toBe(false)
+    expect(readiness.missingReasons).toEqual(['请完整配置主 API 地址、密钥与模型'])
   })
 
   it('allows chat when required content and primary API are ready', () => {

@@ -1,5 +1,5 @@
 import { Check, Gauge, PencilSimple, SlidersHorizontal, Trash } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FileImportControl } from '../../components/FileImportControl'
 import { PresetModal } from '../../components/SillyTavern/PresetModal'
 import { importPreset } from '../../sillytavern/importer'
@@ -20,6 +20,10 @@ export function PresetPanel({ presets, activePresetId, onSelect, onImport, onSav
   const [editing, setEditing] = useState<ChatPreset | null>(null)
   const selected = presets.find((preset) => preset.id === selectedId) ?? presets.find((preset) => preset.id === activePresetId) ?? presets[0] ?? null
 
+  useEffect(() => {
+    if (activePresetId) setSelectedId(activePresetId)
+  }, [activePresetId])
+
   const importFile = async (file: File) => {
     let raw: unknown
     try { raw = JSON.parse(await file.text()) } catch { throw new Error(`${file.name} 不是有效的 JSON 文件`) }
@@ -30,9 +34,9 @@ export function PresetPanel({ presets, activePresetId, onSelect, onImport, onSav
 
   return (
     <div className="preset-panel library-panel">
-      <p className="panel-intro">预设决定提示词顺序、采样参数和回复长度。这里不会自动生成默认预设。</p>
+      <p className="panel-intro">预设决定提示词顺序、采样参数和回复长度。项目已内置默认预设，你也可以随时导入并切换自己的配置。</p>
       {presets.length === 0 ? (
-        <section className="library-empty"><span><SlidersHorizontal size={30} weight="duotone" /></span><h3>尚未导入对话预设</h3><p>导入 SillyTavern Chat Completion 预设后才能开始聊天。</p></section>
+        <section className="library-empty"><span><SlidersHorizontal size={30} weight="duotone" /></span><h3>当前没有对话预设</h3><p>可以导入 SillyTavern Chat Completion 预设，或清除本地数据以恢复内置默认预设。</p></section>
       ) : (
         <div className="library-list preset-library" aria-label="对话预设列表">
           {presets.map((preset) => <button id={`preset-library-item-${preset.id}`} key={preset.id} type="button" className={selected?.id === preset.id ? 'selected' : ''} aria-pressed={preset.id === activePresetId} onClick={() => setSelectedId(preset.id)}><span className="library-glyph"><Gauge size={20} /></span><span><strong>{preset.name}</strong><small>{preset.description || 'SillyTavern 对话预设'}</small></span>{preset.id === activePresetId && <Check size={17} weight="bold" aria-label="当前启用" />}</button>)}

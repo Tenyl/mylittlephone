@@ -18,17 +18,18 @@ describe('empty-first database initialization', () => {
 
     const settings = await db.settings.get('settings')
     expect(settings).toMatchObject({
-      apiMode: 'dual',
+      apiMode: 'single',
       activeCharacterId: null,
       activePresetId: null,
       activeLorebookIds: [],
       activeChatId: null,
-      uiMode: 'game',
+      uiMode: 'chat',
       customTags: ['maintext', 'option', 'sum', 'vars', 'thinking', 'think'],
     })
     expect(settings?.api.baseUrl).toBe('')
     expect(settings?.api.apiKey).toBe('')
     expect(settings?.api.model).toBe('')
+    expect(settings?.api.secondary).toMatchObject({ enabled: false, baseUrl: '', apiKey: '', model: '' })
   })
 
   it('strips API keys from exports and preserves current keys during import', async () => {
