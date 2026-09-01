@@ -114,6 +114,20 @@ describe('useSillytavern controller', () => {
     })
     expect(result.current.activeCharacter?.name).toBe('迷迭香')
 
+    await act(async () => result.current.updateActiveChatProfile({
+      characterAvatar: 'data:image/png;base64,eQ==',
+    }))
+    expect(result.current.activeChat).toMatchObject({
+      characterDisplayName: '小迷',
+      characterAvatar: 'data:image/png;base64,eQ==',
+    })
+
+    await act(async () => result.current.updateActiveChatProfile({ characterDisplayName: '迷迷' }))
+    expect(result.current.activeChat).toMatchObject({
+      characterDisplayName: '迷迷',
+      characterAvatar: 'data:image/png;base64,eQ==',
+    })
+
     await act(async () => result.current.deleteCharacter(BUNDLED_CHARACTER_ID))
     expect(result.current.characters.some((item) => item.id === BUNDLED_CHARACTER_ID)).toBe(true)
   })

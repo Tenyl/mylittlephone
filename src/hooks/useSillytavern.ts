@@ -586,13 +586,14 @@ export function useSillytavern(bundledDefaultsLoader: BundledDefaultsLoader = lo
     patch: Partial<Pick<ChatSession, 'characterDisplayName' | 'characterAvatar'>>,
   ) => {
     if (!activeChat) return;
-    await replaceChat({
-      ...activeChat,
-      ...patch,
-      characterDisplayName: patch.characterDisplayName?.trim() || undefined,
-      characterAvatar: patch.characterAvatar || undefined,
-      updatedAt: Date.now(),
-    });
+    const nextChat = { ...activeChat, ...patch, updatedAt: Date.now() };
+    if (Object.hasOwn(patch, 'characterDisplayName')) {
+      nextChat.characterDisplayName = patch.characterDisplayName?.trim() || undefined;
+    }
+    if (Object.hasOwn(patch, 'characterAvatar')) {
+      nextChat.characterAvatar = patch.characterAvatar || undefined;
+    }
+    await replaceChat(nextChat);
   }, [activeChat, replaceChat]);
 
   const resetAllData = useCallback(async () => {
