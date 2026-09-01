@@ -49,4 +49,19 @@ describe('accessibility contracts', () => {
       expect(new Set(ids).size).toBe(ids.length)
     })
   })
+
+  it('keeps keyboard focus inside a settings dialog', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: '系统设置' }))
+    const close = screen.getByRole('button', { name: '关闭系统设置' })
+    const last = screen.getByRole('button', { name: '测试连接' })
+
+    last.focus()
+    await user.tab()
+    expect(close).toHaveFocus()
+
+    await user.tab({ shift: true })
+    expect(last).toHaveFocus()
+  })
 })

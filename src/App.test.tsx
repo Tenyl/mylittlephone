@@ -93,7 +93,7 @@ describe('SillyTavern character chat app', () => {
 
     await user.type(composer, '今晚会下雨吗？{Enter}')
 
-    expect(within(screen.getByLabelText('聊天记录')).getByText('今晚会下雨吗？')).toBeInTheDocument()
+    await waitFor(() => expect(within(screen.getByLabelText('聊天记录')).getByText('今晚会下雨吗？')).toBeInTheDocument())
     await waitFor(() => expect(within(screen.getByLabelText('聊天记录')).getByText('至少还要下一小时。')).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /留在这里/ })).toBeInTheDocument()
     expect(screen.queryByText('核对天气')).not.toBeInTheDocument()
@@ -122,6 +122,6 @@ describe('SillyTavern character chat app', () => {
     await user.click(await screen.findByRole('button', { name: '停止生成' }))
 
     expect(await screen.findByText('回复已中断')).toBeInTheDocument()
-    expect(screen.getByLabelText('输入聊天消息')).toBeEnabled()
+    await waitFor(() => expect(screen.getByLabelText('输入聊天消息')).toBeEnabled())
   })
 })

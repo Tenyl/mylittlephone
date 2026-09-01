@@ -1,5 +1,6 @@
 import { BookOpenText, BracketsCurly, ChatsCircle, ClockCounterClockwise, GearSix, IdentificationCard, SlidersHorizontal, Sparkle, UserCircle, X } from '@phosphor-icons/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap'
 import type { AppSettings, CharacterCard, ChatMessage, ChatPreset, ChatSession, Lorebook } from '../sillytavern/types'
 import type { SetupReadiness } from '../sillytavern/readiness'
 import { SetupGuide } from '../features/onboarding/SetupGuide'
@@ -91,6 +92,7 @@ export function AppShell(props: AppShellProps) {
 
 function MobileNavigation({ onClose, onOpenPanel }: { onClose: () => void; onOpenPanel: (panel: PanelId) => void }) {
   const closeRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => { const previous = document.activeElement as HTMLElement | null; closeRef.current?.focus(); const onKeyDown = (event: KeyboardEvent) => event.key === 'Escape' && onClose(); window.addEventListener('keydown', onKeyDown); return () => { window.removeEventListener('keydown', onKeyDown); previous?.focus() } }, [onClose])
-  return <div className="mobile-nav-scrim" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="mobile-nav-sheet" role="dialog" aria-modal="true" aria-labelledby="mobile-navigation-title"><header><div><span className="eyebrow">Luma Chat</span><h2 id="mobile-navigation-title">功能导航</h2></div><button ref={closeRef} id="mobile-navigation-close" className="icon-button" type="button" aria-label="关闭功能导航" onClick={onClose}><X size={21} /></button></header><nav aria-label="移动功能导航">{navItems.map(({ id, label, helper, icon: Icon }) => <button key={id} id={`mobile-nav-${id}`} type="button" onClick={() => onOpenPanel(id)}><span><Icon size={21} /></span><div><strong>{label}</strong><small>{helper}</small></div></button>)}</nav></section></div>
+  const dialogRef = useRef<HTMLElement>(null)
+  useDialogFocusTrap(dialogRef, closeRef, onClose)
+  return <div className="mobile-nav-scrim" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section ref={dialogRef} className="mobile-nav-sheet" role="dialog" aria-modal="true" aria-labelledby="mobile-navigation-title" tabIndex={-1}><header><div><span className="eyebrow">Luma Chat</span><h2 id="mobile-navigation-title">功能导航</h2></div><button ref={closeRef} id="mobile-navigation-close" className="icon-button" type="button" aria-label="关闭功能导航" onClick={onClose}><X size={21} /></button></header><nav aria-label="移动功能导航">{navItems.map(({ id, label, helper, icon: Icon }) => <button key={id} id={`mobile-nav-${id}`} type="button" onClick={() => onOpenPanel(id)}><span><Icon size={21} /></span><div><strong>{label}</strong><small>{helper}</small></div></button>)}</nav></section></div>
 }

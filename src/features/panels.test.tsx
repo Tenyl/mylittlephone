@@ -53,6 +53,14 @@ describe('empty-first configuration panels', () => {
     expect(screen.getByRole('button', { name: '停用世界书' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '停用世界书' }))
     expect(screen.getByRole('button', { name: '启用世界书' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '编辑世界书' }))
+    const editor = screen.getByRole('dialog', { name: '编辑世界书' })
+    const name = within(editor).getByLabelText('世界书名称')
+    await user.clear(name)
+    await user.type(name, '雨城纪要')
+    await user.click(within(editor).getByRole('button', { name: '保存世界书' }))
+    expect(await screen.findByRole('heading', { name: '雨城纪要' })).toBeInTheDocument()
   })
 
   it('imports and activates a SillyTavern response preset', async () => {
@@ -66,6 +74,16 @@ describe('empty-first configuration panels', () => {
     expect(await screen.findByRole('heading', { name: '沉浸扮演' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '正在使用' })).toBeDisabled()
     expect(screen.getByText('预设已导入')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '编辑对话预设' }))
+    const editor = screen.getByRole('dialog', { name: '编辑对话预设' })
+    const temperature = within(editor).getByLabelText('温度')
+    await user.clear(temperature)
+    await user.type(temperature, '0.42')
+    await user.click(within(editor).getByRole('button', { name: '提示词' }))
+    await user.type(within(editor).getByLabelText('主提示词'), ' 保持克制。')
+    await user.click(within(editor).getByRole('button', { name: '保存对话预设' }))
+    expect(screen.queryByRole('dialog', { name: '编辑对话预设' })).not.toBeInTheDocument()
   })
 
   it('requires two in-app confirmations before clearing all local data', async () => {

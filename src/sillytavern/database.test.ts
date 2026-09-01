@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
-import { clearAllData, getDatabase, initializeDatabase } from './database'
+import { clearAllData, exportAllData, getDatabase, getEmptyFirstSettings, importAllData, initializeDatabase, saveSettings } from './database'
 
 describe('empty-first database initialization', () => {
   afterEach(async () => {
@@ -29,5 +29,23 @@ describe('empty-first database initialization', () => {
     expect(settings?.api.baseUrl).toBe('')
     expect(settings?.api.apiKey).toBe('')
     expect(settings?.api.model).toBe('')
+  })
+
+  it('strips API keys from exports and preserves current keys during import', async () => {
+    await initializeDatabase()
+    const settings = getEmptyFirstSettings()
+    settings.api = { ...settings.api, apiKey: 'primary-secret', secondary: { ...settings.api.secondary!, apiKey: 'secondary-secret' } }
+    await saveSettings(settings)
+
+    const backup = await exportAllData()
+    expect(backup.settings[0].api.apiKey).toBe('')
+    expect(backup.settings[0].api.secondary?.apiKey).toBe('')
+
+    backup.settings[0].userName = '导入后的用户'
+    await importAllData(backup)
+    const restored = await getDatabase().settings.get('settings')
+    expect(restored?.userName).toBe('导入后的用户')
+    expect(restored?.api.apiKey).toBe('primary-secret')
+    expect(restored?.api.secondary?.apiKey).toBe('secondary-secret')
   })
 })

@@ -1,5 +1,6 @@
 import { PencilSimple } from '@phosphor-icons/react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
+import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap'
 
 interface FormDialogProps {
   title: string
@@ -18,20 +19,8 @@ export function FormDialog({ title, description, label, initialValue = '', submi
   const [value, setValue] = useState(initialValue)
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null
-    inputRef.current?.focus()
-    inputRef.current?.select()
-    const keyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel()
-    }
-    window.addEventListener('keydown', keyDown)
-    return () => {
-      window.removeEventListener('keydown', keyDown)
-      previous?.focus()
-    }
-  }, [onCancel])
+  const dialogRef = useRef<HTMLElement>(null)
+  useDialogFocusTrap(dialogRef, inputRef, onCancel)
 
   const submit = async () => {
     if (!value.trim() || submitting) return
@@ -41,7 +30,7 @@ export function FormDialog({ title, description, label, initialValue = '', submi
 
   return (
     <div className="confirm-scrim">
-      <section className="confirm-dialog form-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <section ref={dialogRef} className="confirm-dialog form-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
         <span className="confirm-icon form-icon"><PencilSimple size={25} weight="duotone" /></span>
         <h2 id={titleId}>{title}</h2>
         <p>{description}</p>

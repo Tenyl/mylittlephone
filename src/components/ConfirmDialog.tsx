@@ -1,5 +1,6 @@
 import { Warning } from '@phosphor-icons/react'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
+import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap'
 
 interface ConfirmDialogProps {
   title: string
@@ -12,15 +13,11 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({ title, description, confirmLabel, onConfirm, onCancel }: ConfirmDialogProps) {
   const titleId = `confirm-title-${title}`
   const cancelRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    cancelRef.current?.focus()
-    const onKeyDown = (event: KeyboardEvent) => event.key === 'Escape' && onCancel()
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onCancel])
+  const dialogRef = useRef<HTMLElement>(null)
+  useDialogFocusTrap(dialogRef, cancelRef, onCancel)
   return (
     <div className="confirm-scrim">
-      <section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={`${titleId}-description`}>
+      <section ref={dialogRef} className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={`${titleId}-description`} tabIndex={-1}>
         <span className="confirm-icon"><Warning size={26} weight="duotone" /></span>
         <h2 id={titleId}>{title}</h2>
         <p id={`${titleId}-description`}>{description}</p>

@@ -38,7 +38,7 @@ export function MessageList({ messages, character, thinkingDisplay, generating, 
   return (
     <section id="chat-message-region" className="message-region background-rain" aria-label="聊天记录">
       <div className="message-scroll" ref={scrollerRef} onScroll={() => { const node = scrollerRef.current; if (node) setAwayFromBottom(node.scrollHeight - node.scrollTop - node.clientHeight > 120) }}>
-        <div className="date-separator"><span>本地加密式存储 · 当前设备</span></div>
+        <div className="date-separator"><span>本地浏览器存储 · 当前设备</span></div>
         {hiddenCount > 0 && <p className="windowing-notice">为保持流畅，已暂存上方 {hiddenCount} 条较早消息。</p>}
         {visibleMessages.map((message, index) => {
           const previous = visibleMessages[index - 1]

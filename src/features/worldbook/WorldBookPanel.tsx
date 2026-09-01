@@ -1,6 +1,7 @@
-import { BookOpenText, CaretDown, Check, MagnifyingGlass, Trash } from '@phosphor-icons/react'
+import { BookOpenText, CaretDown, Check, MagnifyingGlass, PencilSimple, Trash } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
 import { FileImportControl } from '../../components/FileImportControl'
+import { LorebookEditorModal } from '../../components/SillyTavern/LorebookEditorModal'
 import { importLorebook } from '../../sillytavern/importer'
 import type { Lorebook, SillyTavernLorebookExport } from '../../sillytavern/types'
 
@@ -9,14 +10,16 @@ interface WorldBookPanelProps {
   activeIds: string[]
   onToggle: (bookId: string) => void | Promise<void>
   onImport: (book: Lorebook) => void | Promise<void>
+  onSave: (book: Lorebook) => void | Promise<void>
   onDelete: (book: Lorebook) => void
   onError: (message: string) => void
 }
 
-export function WorldBookPanel({ lorebooks, activeIds, onToggle, onImport, onDelete, onError }: WorldBookPanelProps) {
+export function WorldBookPanel({ lorebooks, activeIds, onToggle, onImport, onSave, onDelete, onError }: WorldBookPanelProps) {
   const [selectedId, setSelectedId] = useState<string | null>(lorebooks[0]?.id ?? null)
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [editing, setEditing] = useState<Lorebook | null>(null)
   const selected = lorebooks.find((book) => book.id === selectedId) ?? lorebooks[0] ?? null
   const entries = useMemo(() => selected?.entries.filter((entry) => `${entry.comment ?? ''}${entry.keys.join('')}${entry.content}`.toLowerCase().includes(query.trim().toLowerCase())) ?? [], [query, selected])
 
@@ -49,10 +52,11 @@ export function WorldBookPanel({ lorebooks, activeIds, onToggle, onImport, onDel
               return <article key={entry.id} className={`world-entry ${isExpanded ? 'expanded' : ''}`}><button id={`expand-entry-${entry.id}`} className="entry-expand" type="button" aria-expanded={isExpanded} aria-label={`${isExpanded ? '收起' : '展开'}${entry.comment || entry.keys[0] || '世界书条目'}`} onClick={() => setExpanded(isExpanded ? null : entry.id)}><span className="entry-category">{entry.constant ? '常驻' : '触发'}</span><span><strong>{entry.comment || entry.keys[0] || '未命名条目'}</strong><small>顺序 {entry.order} · {entry.keys.join(' / ') || '无关键词'}</small></span><CaretDown size={16} className="entry-caret" /></button>{isExpanded && <div className="entry-content"><p>{entry.content}</p><div>{entry.keys.map((key) => <span key={key}>{key}</span>)}</div></div>}</article>
             })}
           </div>
-          <div className="library-actions"><button id={`lorebook-toggle-${selected.id}`} type="button" onClick={() => void onToggle(selected.id)}><Check size={18} />{activeIds.includes(selected.id) ? '停用世界书' : '启用世界书'}</button><button id={`lorebook-delete-${selected.id}`} className="danger-action" type="button" onClick={() => onDelete(selected)}><Trash size={18} />删除世界书</button></div>
+          <div className="library-actions"><button id={`lorebook-edit-${selected.id}`} type="button" onClick={() => setEditing(selected)}><PencilSimple size={18} />编辑世界书</button><button id={`lorebook-toggle-${selected.id}`} type="button" onClick={() => void onToggle(selected.id)}><Check size={18} />{activeIds.includes(selected.id) ? '停用世界书' : '启用世界书'}</button><button id={`lorebook-delete-${selected.id}`} className="danger-action" type="button" onClick={() => onDelete(selected)}><Trash size={18} />删除世界书</button></div>
         </>
       )}
       <FileImportControl id="import-worldbook-file" label={lorebooks.length ? '导入另一份世界书' : '导入世界书'} helper="支持 SillyTavern 世界书 JSON" onFile={importFile} onError={onError} />
+      {editing && <LorebookEditorModal lorebook={editing} onClose={() => setEditing(null)} onSave={async (book) => { await onSave(book); setEditing(null) }} />}
     </div>
   )
 }

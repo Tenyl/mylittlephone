@@ -1,6 +1,7 @@
-import { Check, Gauge, SlidersHorizontal, Trash } from '@phosphor-icons/react'
+import { Check, Gauge, PencilSimple, SlidersHorizontal, Trash } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { FileImportControl } from '../../components/FileImportControl'
+import { PresetModal } from '../../components/SillyTavern/PresetModal'
 import { importPreset } from '../../sillytavern/importer'
 import type { ChatPreset } from '../../sillytavern/types'
 
@@ -9,12 +10,14 @@ interface PresetPanelProps {
   activePresetId: string | null
   onSelect: (presetId: string) => void | Promise<void>
   onImport: (preset: ChatPreset) => void | Promise<void>
+  onSave: (preset: ChatPreset) => void | Promise<void>
   onDelete: (preset: ChatPreset) => void
   onError: (message: string) => void
 }
 
-export function PresetPanel({ presets, activePresetId, onSelect, onImport, onDelete, onError }: PresetPanelProps) {
+export function PresetPanel({ presets, activePresetId, onSelect, onImport, onSave, onDelete, onError }: PresetPanelProps) {
   const [selectedId, setSelectedId] = useState<string | null>(activePresetId)
+  const [editing, setEditing] = useState<ChatPreset | null>(null)
   const selected = presets.find((preset) => preset.id === selectedId) ?? presets.find((preset) => preset.id === activePresetId) ?? presets[0] ?? null
 
   const importFile = async (file: File) => {
@@ -45,10 +48,11 @@ export function PresetPanel({ presets, activePresetId, onSelect, onImport, onDel
             <div><dt>上下文</dt><dd>{String(selected.settings.openai_max_context ?? selected.settings.max_length ?? '未指定')}</dd></div>
             <div><dt>提示词节点</dt><dd>{Array.isArray(selected.settings.prompt_order) ? selected.settings.prompt_order.length : 0}</dd></div>
           </dl>
-          <div className="library-actions"><button id={`preset-activate-${selected.id}`} type="button" disabled={selected.id === activePresetId} onClick={() => void onSelect(selected.id)}><Check size={18} />{selected.id === activePresetId ? '正在使用' : '使用此预设'}</button><button id={`preset-delete-${selected.id}`} className="danger-action" type="button" onClick={() => onDelete(selected)}><Trash size={18} />删除预设</button></div>
+          <div className="library-actions"><button id={`preset-edit-${selected.id}`} type="button" onClick={() => setEditing(selected)}><PencilSimple size={18} />编辑对话预设</button><button id={`preset-activate-${selected.id}`} type="button" disabled={selected.id === activePresetId} onClick={() => void onSelect(selected.id)}><Check size={18} />{selected.id === activePresetId ? '正在使用' : '使用此预设'}</button><button id={`preset-delete-${selected.id}`} className="danger-action" type="button" onClick={() => onDelete(selected)}><Trash size={18} />删除预设</button></div>
         </section>
       )}
       <FileImportControl id="import-preset-file" label={presets.length ? '导入另一份预设' : '导入对话预设'} helper="支持 SillyTavern Chat Completion 预设 JSON" onFile={importFile} onError={onError} />
+      {editing && <PresetModal preset={editing} onClose={() => setEditing(null)} onSave={async (preset) => { await onSave(preset); setEditing(null) }} />}
     </div>
   )
 }
