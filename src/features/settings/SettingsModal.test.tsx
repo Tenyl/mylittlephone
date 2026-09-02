@@ -57,8 +57,8 @@ describe('SillyTavern settings panel', () => {
     expect(screen.getByRole('button', { name: '我的资料' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '游戏显示' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '我的资料' }))
-    fireEvent.change(screen.getByLabelText('玩家昵称'), { target: { value: '博士' } })
-    expect(props.onUpdate).toHaveBeenLastCalledWith({ userName: '博士' })
+    fireEvent.change(screen.getByLabelText('玩家昵称'), { target: { value: '博士本人' } })
+    expect(props.onUpdate).toHaveBeenLastCalledWith({ userName: '博士本人' })
 
     await user.click(screen.getByRole('button', { name: '回复格式' }))
     expect(screen.getByText('maintext')).toBeInTheDocument()

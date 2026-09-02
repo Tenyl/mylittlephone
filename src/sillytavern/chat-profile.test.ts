@@ -36,7 +36,7 @@ describe('chat display profile', () => {
       characterDisplayName: '   ',
       characterAvatar: '',
     }, settings)).toEqual({
-      userName: '用户',
+      userName: '博士',
       userAvatar: '',
       characterName: '迷迭香',
       characterAvatar: 'character-avatar',

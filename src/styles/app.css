@@ -5,7 +5,7 @@
 .ambient-two { width: 620px; height: 620px; right: -240px; bottom: -310px; background: radial-gradient(circle, rgba(124, 104, 245, .16), transparent 68%); }
 .app-window { width: min(1440px, calc(100vw - 48px)); height: min(900px, calc(100dvh - 48px)); min-height: 680px; display: grid; grid-template-columns: 224px minmax(480px, 1fr) 292px; overflow: hidden; border: 1px solid rgba(255,255,255,.8); border-radius: 28px; background: var(--surface); box-shadow: var(--shadow-window); backdrop-filter: blur(22px) saturate(118%); }
 .phone-device { width: min(430px, calc((100dvh - 40px) * .51), calc(100vw - 80px)); height: min(860px, calc(100dvh - 40px)); position: relative; padding: 12px; border: 1px solid rgba(255,255,255,.3); border-radius: 46px; background: linear-gradient(145deg, #303641, #11151b 58%, #252c35); box-shadow: 0 38px 90px rgba(27,45,67,.3), 0 10px 28px rgba(24,38,56,.22), inset 0 1px 1px rgba(255,255,255,.28), inset 0 -1px 1px rgba(0,0,0,.7); animation: phone-arrive 520ms var(--ease-spring) both; }
-.phone-screen { width: 100%; height: 100%; min-height: 0; position: relative; overflow: hidden; border: 1px solid rgba(9,14,20,.9); border-radius: 35px; background: var(--surface); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+.phone-screen { width: 100%; height: 100%; min-height: 0; position: relative; overflow: hidden; clip-path: inset(0 round 35px); border: 1px solid rgba(9,14,20,.9); border-radius: 35px; background: var(--surface); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
 .phone-hardware { height: 9px; display: flex; align-items: center; justify-content: center; gap: 8px; position: absolute; z-index: 5; top: 3px; left: 50%; transform: translateX(-50%); pointer-events: none; }
 .phone-speaker { width: 42px; height: 4px; border-radius: 999px; background: #080b0f; box-shadow: inset 0 1px rgba(255,255,255,.08); }
 .phone-camera { width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #324d69, #080b0f 62%); box-shadow: 0 0 0 1px rgba(0,0,0,.62); }
@@ -13,7 +13,7 @@
 .phone-key-volume-up { height: 58px; left: -3px; top: 132px; }
 .phone-key-volume-down { height: 58px; left: -3px; top: 201px; }
 .phone-key-power { height: 82px; right: -3px; top: 162px; border-radius: 0 2px 2px 0; }
-.app-window.immersive-chat-shell { width: 100%; height: 100%; min-height: 0; grid-template-columns: minmax(0, 1fr); border: 0; border-radius: 0; box-shadow: none; }
+.app-window.immersive-chat-shell { width: 100%; height: 100%; min-height: 0; grid-template-columns: minmax(0, 1fr); overflow: hidden; clip-path: inset(0 round 33px); border: 0; border-radius: 33px; box-shadow: none; }
 @keyframes phone-arrive { from { opacity: 0; transform: translateY(14px) scale(.982); } }
 
 .nav-rail { display: flex; flex-direction: column; padding: 24px 16px 18px; border-right: 1px solid var(--line); background: linear-gradient(180deg, rgba(245,249,253,.88), rgba(235,243,250,.72)); }
@@ -54,11 +54,12 @@
 .message-region::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .8; background: radial-gradient(circle at 18% 10%, rgba(110,174,240,.13), transparent 32%), radial-gradient(circle at 78% 55%, rgba(129,111,241,.08), transparent 35%), linear-gradient(115deg, transparent 48%, rgba(255,255,255,.36) 48.2%, transparent 48.4%); background-size: auto, auto, 54px 54px; }
 .background-dawn::before { background: linear-gradient(145deg, rgba(255,219,198,.22), transparent 50%), radial-gradient(circle at 70% 20%, rgba(255,181,160,.16), transparent 34%); }
 .background-plain::before { display: none; }
-.message-scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(93,115,140,.24) transparent; padding: 24px clamp(18px, 5vw, 54px) 32px; position: relative; z-index: 1; }
+.message-scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(93,115,140,.24) transparent; padding: 24px 18px 32px; position: relative; z-index: 1; }
 .date-separator { display: flex; justify-content: center; margin: 2px 0 24px; }
 .date-separator span { padding: 5px 10px; border: 1px solid rgba(255,255,255,.75); border-radius: 999px; color: var(--ink-faint); background: rgba(240,246,251,.68); font-size: 10px; backdrop-filter: blur(8px); }
-.message-row { display: flex; gap: 10px; margin-top: 18px; animation: message-in 220ms var(--ease-spring) both; }
+.message-row { width: 100%; display: flex; gap: 10px; margin-top: 18px; animation: message-in 220ms var(--ease-spring) both; }
 .message-row.compact { margin-top: 5px; }
+.message-row.assistant { justify-content: flex-start; }
 .message-row.user { justify-content: flex-end; }
 .message-row > img { margin-top: 18px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(38,62,91,.12); }
 .message-row > .message-avatar-fallback { margin-top: 18px; }
@@ -129,9 +130,10 @@
   .app-stage { position: fixed; inset: 0; display: block; width: 100%; height: 100dvh; min-height: 0; padding: 0; }
   .app-stage::before { display: none; }
   .ambient, .nav-rail { display: none; }
-  .phone-device, .phone-screen { width: 100%; height: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0; background: var(--surface-solid); box-shadow: none; animation: none; }
+  .phone-device, .phone-screen { width: 100%; height: 100%; min-height: 0; padding: 0; clip-path: none; border: 0; border-radius: 0; background: var(--surface-solid); box-shadow: none; animation: none; }
   .phone-hardware, .phone-key { display: none; }
   .app-window { width: 100%; height: 100%; min-height: 0; display: block; border: 0; border-radius: 0; box-shadow: none; }
+  .app-window.immersive-chat-shell { clip-path: none; border-radius: 0; }
   .chat-column { width: 100%; height: 100%; min-height: 0; }
   .mobile-only { display: inline-grid; }
   .chat-header { min-height: 68px; padding: max(8px, env(safe-area-inset-top)) 12px 8px; }

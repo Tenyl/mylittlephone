@@ -62,7 +62,7 @@ export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, on
           <div className="profile-editor-card">
             {settings.userAvatar ? <img src={settings.userAvatar} alt="当前玩家头像" width="72" height="72" /> : <span className="profile-avatar-fallback" aria-hidden="true"><UserCircle size={36} /></span>}
             <div>
-              <strong>{settings.userName.trim() || '用户'}</strong>
+              <strong>{settings.userName.trim() || '博士'}</strong>
               <span>保存在当前浏览器</span>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto'
+import Dexie from 'dexie'
 import { afterEach, describe, expect, it } from 'vitest'
 import { clearAllData, exportAllData, getDatabase, getEmptyFirstSettings, importAllData, initializeDatabase, resolveApiSource, saveSettings } from './database'
 
@@ -24,6 +25,7 @@ describe('empty-first database initialization', () => {
       activePresetId: null,
       activeLorebookIds: [],
       activeChatId: null,
+      userName: '博士',
       userAvatar: '',
       uiMode: 'chat',
       customTags: ['maintext', 'option', 'sum', 'vars', 'thinking', 'think'],
@@ -32,6 +34,28 @@ describe('empty-first database initialization', () => {
     expect(settings?.api.apiKey).toBe('')
     expect(settings?.api.model).toBe('')
     expect(settings?.api.secondary).toMatchObject({ enabled: false, baseUrl: '', apiKey: '', model: '' })
+  })
+
+  it('migrates the former untouched default player name to 博士', async () => {
+    await clearAllData()
+    const legacy = new Dexie('SillyTavernWebDB')
+    legacy.version(6).stores({
+      characters: 'id, name, importedAt, updatedAt',
+      lorebooks: 'id, name, updatedAt',
+      presets: 'id, name, updatedAt',
+      settings: 'key',
+      chats: 'id, name, updatedAt',
+    })
+    await legacy.open()
+    await legacy.table('settings').put({ ...getEmptyFirstSettings(), userName: '用户' })
+    await legacy.table('chats').put({
+      id: 'legacy-chat', name: '旧会话', messages: [], characterName: '迷迭香', userName: '用户',
+      presetId: null, lorebookIds: [], variables: {}, createdAt: 1, updatedAt: 1,
+    })
+    legacy.close()
+
+    expect((await getDatabase().settings.get('settings'))?.userName).toBe('博士')
+    expect((await getDatabase().chats.get('legacy-chat'))?.userName).toBe('博士')
   })
 
   it('migrates legacy complete local credentials to custom mode and blank settings to managed mode', () => {

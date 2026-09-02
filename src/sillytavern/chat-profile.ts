@@ -13,7 +13,7 @@ export function resolveChatProfile(
   settings: AppSettings,
 ): ResolvedChatProfile {
   return {
-    userName: settings.userName.trim() || '用户',
+    userName: settings.userName.trim() || '博士',
     userAvatar: settings.userAvatar || '',
     characterName: chat.characterDisplayName?.trim() || character.name,
     characterAvatar: chat.characterAvatar || character.avatar,

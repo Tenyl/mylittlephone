@@ -155,13 +155,14 @@ describe('bundled default content', () => {
     expect(characters.map((item) => item.id)).toEqual([BUNDLED_CHARACTER_ID])
     expect(presets.map((item) => item.id)).toEqual([BUNDLED_PRESET_ID])
     expect(chats).toHaveLength(1)
-    expect(chats[0]).toMatchObject({ id: BUNDLED_CHAT_ID, characterId: BUNDLED_CHARACTER_ID, presetId: BUNDLED_PRESET_ID })
+    expect(chats[0]).toMatchObject({ id: BUNDLED_CHAT_ID, characterId: BUNDLED_CHARACTER_ID, presetId: BUNDLED_PRESET_ID, userName: '博士' })
     expect(chats[0].messages[0].content).toBe('嗯...我在。')
     expect(settings).toMatchObject({
       apiSource: 'managed',
       activeCharacterId: BUNDLED_CHARACTER_ID,
       activePresetId: BUNDLED_PRESET_ID,
       activeChatId: BUNDLED_CHAT_ID,
+      userName: '博士',
       characterName: '迷迭香',
       apiMode: 'single',
       api: { baseUrl: '', apiKey: '', model: '', secondary: { enabled: false, baseUrl: '', apiKey: '', model: '' } },

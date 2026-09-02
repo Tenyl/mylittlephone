@@ -233,7 +233,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   activePresetId: null,
   activeLorebookIds: [],
   activeChatId: null,
-  userName: '用户',
+  userName: '博士',
   userAvatar: '',
   characterName: '',
   theme: 'light',

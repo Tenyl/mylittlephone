@@ -118,6 +118,7 @@ describe('SillyTavern character chat app', () => {
     const body = JSON.parse(bodyText)
     expect(body.characterId).toBe(BUNDLED_CHARACTER_ID)
     expect(body.characterName).toBe('迷迭香')
+    expect(body.userName).toBe('博士')
     expect(body.character).toBeUndefined()
     expect(body.preset.name).toBe('默认预设')
     expect(bodyText).not.toContain('test-key')
