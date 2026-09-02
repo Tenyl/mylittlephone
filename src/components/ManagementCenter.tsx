@@ -7,13 +7,14 @@ import {
   GearSix,
   IdentificationCard,
   SlidersHorizontal,
+  UserCircle,
   X,
 } from '@phosphor-icons/react'
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap'
 
-export type ManagementSection = 'home' | 'chat-profile' | 'character' | 'worldbook' | 'presets' | 'variables' | 'settings' | 'data'
+export type ManagementSection = 'home' | 'chat-profile' | 'profile' | 'character' | 'worldbook' | 'presets' | 'variables' | 'settings' | 'data'
 
 interface ManagementCenterProps {
   section: ManagementSection
@@ -25,6 +26,7 @@ interface ManagementCenterProps {
 const sectionTitles: Record<ManagementSection, string> = {
   home: '管理中心',
   'chat-profile': '当前聊天',
+  profile: '我的资料',
   character: '角色卡库',
   worldbook: '世界书',
   presets: '对话预设',
@@ -35,6 +37,7 @@ const sectionTitles: Record<ManagementSection, string> = {
 
 const managementEntries = [
   { id: 'chat-profile', section: 'chat-profile' as const, label: '当前聊天', helper: '设置备注与本会话头像', icon: ChatCircleText },
+  { id: 'profile', section: 'profile' as const, label: '我的资料', helper: '设置你的昵称与聊天头像', icon: UserCircle },
   { id: 'character', section: 'character' as const, label: '角色卡', helper: '导入、查看与切换聊天对象', icon: IdentificationCard },
   { id: 'worldbook', section: 'worldbook' as const, label: '世界书', helper: '管理背景资料与触发条目', icon: BookOpenText },
   { id: 'presets', section: 'presets' as const, label: '对话预设', helper: '调整提示词与生成参数', icon: SlidersHorizontal },

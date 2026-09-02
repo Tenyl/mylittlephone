@@ -31,7 +31,9 @@ describe('accessibility contracts', () => {
     await user.click(screen.getByRole('button', { name: '打开管理中心' }))
 
     const center = screen.getByRole('dialog', { name: '管理中心' })
-    expect(within(center).getByRole('button', { name: /当前聊天/ })).toBeInTheDocument()
+    const managementItems = within(within(center).getByRole('navigation', { name: '管理项目' })).getAllByRole('button')
+    expect(managementItems[0]).toHaveAccessibleName(/当前聊天/)
+    expect(managementItems[1]).toHaveAccessibleName(/我的资料/)
     expect(within(center).getByRole('button', { name: /角色卡/ })).toBeInTheDocument()
     expect(within(center).getByRole('button', { name: /世界书/ })).toBeInTheDocument()
     expect(within(center).getByRole('button', { name: /对话预设/ })).toBeInTheDocument()

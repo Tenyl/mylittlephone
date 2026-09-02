@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { getEmptyFirstSettings } from '../../sillytavern/database'
@@ -51,15 +51,11 @@ describe('SillyTavern settings panel', () => {
     expect(screen.getByLabelText('API Key')).toHaveAttribute('type', 'password')
   })
 
-  it('separates player profile from effective reply formatting and exposes backup controls', async () => {
+  it('keeps player profile outside API settings and exposes formatting and backup controls', async () => {
     const user = userEvent.setup()
     const props = renderSettings()
-    expect(screen.getByRole('button', { name: '我的资料' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '我的资料' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '游戏显示' })).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '我的资料' }))
-    fireEvent.change(screen.getByLabelText('玩家昵称'), { target: { value: '博士本人' } })
-    expect(props.onUpdate).toHaveBeenLastCalledWith({ userName: '博士本人' })
-
     await user.click(screen.getByRole('button', { name: '回复格式' }))
     expect(screen.getByText('maintext')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '删除标签thinking' }))

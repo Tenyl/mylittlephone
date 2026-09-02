@@ -8,6 +8,7 @@ import { ToastRegion, type Notice, type NoticeTone } from './components/ToastReg
 import { CharacterPanel } from './features/character/CharacterPanel'
 import { ChatProfilePanel } from './features/chat-profile/ChatProfilePanel'
 import { HistoryPanel } from './features/history/HistoryPanel'
+import { PlayerProfilePanel } from './features/profile/PlayerProfilePanel'
 import { PresetPanel } from './features/presets/PresetPanel'
 import { SettingsPanel } from './features/settings/SettingsPanel'
 import { VariablesPanel } from './features/variables/VariablesPanel'
@@ -127,6 +128,8 @@ export default function App({ streamDelayMs: _streamDelayMs, bundledDefaultsLoad
 
   const panelContent = activePanel === 'chat-profile' ? (
     <ChatProfilePanel chat={chat.activeChat} character={chat.activeCharacter} onUpdate={chat.updateActiveChatProfile} onError={(message) => pushNotice('error', '头像未更新', message)} />
+  ) : activePanel === 'profile' && chat.settings ? (
+    <PlayerProfilePanel settings={chat.settings} onUpdate={chat.updateSettings} onNotice={pushNotice} />
   ) : activePanel === 'character' ? (
     <CharacterPanel characters={chat.characters} activeCharacterId={chat.settings?.activeCharacterId ?? null} onSelect={async (id) => { await chat.selectCharacter(id); pushNotice('info', '聊天对象已切换', '请创建新会话以使用这张角色卡。') }} onImport={async (file) => { const character = await chat.importCharacter(file); pushNotice('success', '角色卡已导入', `“${character.name}”已加入本地角色卡库。`) }} onDelete={(item) => setConfirmation({ kind: 'delete-character', item })} onError={fileError} />
   ) : activePanel === 'worldbook' ? (

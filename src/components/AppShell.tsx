@@ -7,7 +7,7 @@ import { ChatHeader } from './ChatHeader'
 import { Composer } from './Composer'
 import { MessageList } from './MessageList'
 
-export type PanelId = 'chat-profile' | 'character' | 'worldbook' | 'presets' | 'history' | 'variables' | 'settings'
+export type PanelId = 'chat-profile' | 'profile' | 'character' | 'worldbook' | 'presets' | 'history' | 'variables' | 'settings'
 
 interface AppShellProps {
   activeCharacter: CharacterCard | null

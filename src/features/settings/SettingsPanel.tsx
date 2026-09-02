@@ -1,10 +1,9 @@
-import { Camera, CloudCheck, Eye, EyeSlash, FloppyDisk, PlugsConnected, SlidersHorizontal, Trash, UserCircle, UserGear, Wrench, X } from '@phosphor-icons/react'
+import { CloudCheck, Eye, EyeSlash, FloppyDisk, PlugsConnected, SlidersHorizontal, Trash, UserGear, Wrench, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { fetchModels, testConnection } from '../../sillytavern/api-tools'
-import { readProfileImage } from '../../sillytavern/profile-image'
 import { DEFAULT_FORMAT_PROMPT, type AppSettings } from '../../sillytavern/types'
 
-type Tab = 'profile' | 'primary' | 'secondary' | 'format' | 'data'
+type Tab = 'primary' | 'secondary' | 'format' | 'data'
 
 interface SettingsPanelProps {
   settings: AppSettings
@@ -53,27 +52,8 @@ export function SettingsPanel({ settings, onUpdate, onNotice, onRequestClear, on
   return (
     <div className="settings-panel">
       <nav className="settings-tabs" aria-label="设置分类">
-        {([['profile', '我的资料'], ['primary', '聊天服务'], ['secondary', '次 API'], ['format', '回复格式'], ['data', '本地数据']] as const).map(([id, label]) => <button id={`settings-tab-${id}`} key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>{label}</button>)}
+        {([['primary', '聊天服务'], ['secondary', '次 API'], ['format', '回复格式'], ['data', '本地数据']] as const).map(([id, label]) => <button id={`settings-tab-${id}`} key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>{label}</button>)}
       </nav>
-
-      {tab === 'profile' && (
-        <section className="settings-section" aria-labelledby="player-profile-heading">
-          <div className="settings-heading"><span><UserCircle size={22} /></span><div><h3 id="player-profile-heading">我的资料</h3><p>昵称会进入角色对你的称呼；头像只用于本机聊天界面。</p></div></div>
-          <div className="profile-editor-card">
-            {settings.userAvatar ? <img src={settings.userAvatar} alt="当前玩家头像" width="72" height="72" /> : <span className="profile-avatar-fallback" aria-hidden="true"><UserCircle size={36} /></span>}
-            <div>
-              <strong>{settings.userName.trim() || '博士'}</strong>
-              <span>保存在当前浏览器</span>
-            </div>
-          </div>
-          <label htmlFor="user-display-name">玩家昵称</label><input id="user-display-name" value={settings.userName} maxLength={32} onChange={(event) => void onUpdate({ userName: event.target.value })} />
-          <div className="profile-image-actions">
-            <label htmlFor="player-avatar-file"><input id="player-avatar-file" type="file" accept="image/png,image/jpeg,image/webp" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; try { await onUpdate({ userAvatar: await readProfileImage(file) }); onNotice('success', '头像已更新', '新的玩家头像已保存在当前浏览器。') } catch (cause) { onNotice('error', '头像未更新', cause instanceof Error ? cause.message : '头像文件无法读取') } finally { event.target.value = '' } }} /><Camera size={18} />选择头像</label>
-            {settings.userAvatar && <button id="player-avatar-remove" type="button" onClick={() => void onUpdate({ userAvatar: '' })}><Trash size={18} />移除头像</button>}
-          </div>
-          <p className="field-helper">支持 PNG、JPEG、WebP，最大 2MB。图片不会随聊天请求发送。</p>
-        </section>
-      )}
 
       {tab === 'primary' && (
         <section className="settings-section" aria-labelledby="primary-api-heading">

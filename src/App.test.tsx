@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -137,6 +137,23 @@ describe('SillyTavern character chat app', () => {
     expect(screen.queryByLabelText('主要功能')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('当前上下文')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '打开管理中心' })).toBeInTheDocument()
+  })
+
+  it('saves a Chinese player nickname from the standalone profile section', async () => {
+    const user = userEvent.setup()
+    render(<App bundledDefaultsLoader={bundledDefaultsLoader} />)
+    await user.click(await screen.findByRole('button', { name: '打开管理中心' }))
+    await user.click(within(screen.getByRole('dialog', { name: '管理中心' })).getByRole('button', { name: /我的资料/ }))
+
+    const nickname = screen.getByLabelText('玩家昵称')
+    fireEvent.compositionStart(nickname)
+    fireEvent.change(nickname, { target: { value: '博' } })
+    fireEvent.change(nickname, { target: { value: '博士小号' } })
+    fireEvent.compositionEnd(nickname)
+    expect(nickname).toHaveValue('博士小号')
+    await user.click(screen.getByRole('button', { name: '保存我的资料' }))
+
+    await waitFor(async () => expect(await getSettings()).toMatchObject({ userName: '博士小号' }))
   })
 
   it('hides every streamed fragment and shows only the final role reply', async () => {

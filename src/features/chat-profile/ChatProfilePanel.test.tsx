@@ -19,6 +19,7 @@ describe('current chat profile panel', () => {
     const onUpdate = vi.fn()
     render(<ChatProfilePanel chat={chat} character={character} onUpdate={onUpdate} onError={vi.fn()} />)
 
+    expect(screen.queryByText(/真实角色/)).not.toBeInTheDocument()
     const nickname = screen.getByLabelText('角色备注名')
     await user.clear(nickname)
     await user.type(nickname, '小迷')

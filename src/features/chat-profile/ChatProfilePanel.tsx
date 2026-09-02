@@ -26,7 +26,7 @@ export function ChatProfilePanel({ chat, character, onUpdate, onError }: ChatPro
       <section className="world-summary"><span><ChatCircleText size={24} weight="duotone" /></span><div><h3>当前聊天资料</h3><p>这里的备注和头像只改变“{chat.name}”的显示，不会修改角色卡或提示词。</p></div></section>
       <div className="profile-editor-card">
         {avatar ? <img src={avatar} alt={`${visibleName}的当前头像`} width="72" height="72" /> : <span className="profile-avatar-fallback" aria-hidden="true"><UserCircle size={36} /></span>}
-        <div><strong>{visibleName}</strong><span>真实角色：{character.name}</span></div>
+        <div><strong>{visibleName}</strong></div>
       </div>
       <label htmlFor="chat-character-display-name">角色备注名</label>
       <input id="chat-character-display-name" value={displayName} maxLength={32} placeholder={character.name} onChange={(event) => setDisplayName(event.target.value)} />
