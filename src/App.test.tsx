@@ -139,6 +139,24 @@ describe('SillyTavern character chat app', () => {
     expect(screen.getByRole('button', { name: '打开管理中心' })).toBeInTheDocument()
   })
 
+  it('creates and opens a new conversation from conversation history', async () => {
+    await seedReadyChat()
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByRole('heading', { name: character.name, level: 1 })
+
+    await user.click(screen.getByRole('button', { name: '打开会话历史' }))
+    const history = screen.getByRole('dialog', { name: '会话历史' })
+    await user.click(within(history).getByRole('button', { name: '创建新对话' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '会话历史' })).not.toBeInTheDocument())
+    await waitFor(async () => {
+      const chats = await getChats()
+      expect(chats).toHaveLength(2)
+      expect(await getSettings()).toMatchObject({ activeChatId: expect.not.stringMatching(/^chat-test$/) })
+    })
+  })
+
   it('saves a Chinese player nickname from the standalone profile section', async () => {
     const user = userEvent.setup()
     render(<App bundledDefaultsLoader={bundledDefaultsLoader} />)

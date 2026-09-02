@@ -71,8 +71,10 @@ export default function App({ streamDelayMs: _streamDelayMs, bundledDefaultsLoad
     try {
       await chat.createChat()
       pushNotice('success', '新会话已创建', '角色的初始消息已经写入本地会话。')
+      return true
     } catch (cause) {
       pushNotice('warning', '还不能开始聊天', cause instanceof Error ? cause.message : '请先完成准备步骤。')
+      return false
     }
   }
 
@@ -143,7 +145,7 @@ export default function App({ streamDelayMs: _streamDelayMs, bundledDefaultsLoad
   ) : null
 
   const panel = activePanel === 'history' ? (
-    <PanelDrawer title="会话历史" eyebrow="Local Sessions" onClose={() => setActivePanel(null)}><HistoryPanel chats={chat.chats} activeChatId={chat.settings?.activeChatId ?? null} onSelect={async (id) => { await chat.selectChat(id); setActivePanel(null) }} onRename={(item) => setForm({ kind: 'rename-chat', item })} onDelete={(item) => setConfirmation({ kind: 'delete-chat', item })} /></PanelDrawer>
+    <PanelDrawer title="会话历史" eyebrow="Local Sessions" onClose={() => setActivePanel(null)}><HistoryPanel chats={chat.chats} activeChatId={chat.settings?.activeChatId ?? null} onCreate={async () => { if (await createChat()) setActivePanel(null) }} onSelect={async (id) => { await chat.selectChat(id); setActivePanel(null) }} onRename={(item) => setForm({ kind: 'rename-chat', item })} onDelete={(item) => setConfirmation({ kind: 'delete-chat', item })} /></PanelDrawer>
   ) : activePanel ? (
     <ManagementCenter section={activePanel as ManagementSection} onSelectSection={setActivePanel} onClose={() => setActivePanel(null)}>{panelContent}</ManagementCenter>
   ) : null

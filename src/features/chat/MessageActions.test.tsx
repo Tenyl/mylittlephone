@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { MessageList } from '../../components/MessageList'
@@ -8,6 +8,20 @@ const character = { id: 'character-actions', spec: 'chara_card_v2', specVersion:
 const message = { id: 'user-turn', role: 'user', content: '我推开门。', timestamp: 1, status: 'sent' } satisfies ChatMessage
 
 describe('message action contracts', () => {
+  it('shows message actions as an icon-only horizontal toolbar', async () => {
+    const user = userEvent.setup()
+    render(<MessageList messages={[message]} profile={{ userName: '用户', userAvatar: '', characterName: character.name, characterAvatar: character.avatar }} onEdit={vi.fn()} onBranch={vi.fn()} onDeleteFrom={vi.fn()} onRegenerate={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: '更多消息操作' }))
+
+    const toolbar = screen.getByRole('menu', { name: '消息操作菜单' })
+    expect(toolbar).toHaveAttribute('aria-orientation', 'horizontal')
+    const actions = within(toolbar).getAllByRole('menuitem')
+    expect(actions).toHaveLength(4)
+    expect(actions.map((action) => action.textContent)).toEqual(['', '', '', ''])
+    expect(within(toolbar).getByRole('menuitem', { name: '编辑并重新生成' })).toBeInTheDocument()
+  })
+
   it('routes edit, branch, and delete-from-point actions with the exact message', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn(); const onBranch = vi.fn(); const onDeleteFrom = vi.fn()

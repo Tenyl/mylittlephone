@@ -40,6 +40,28 @@ export function MessageList({ messages, profile, onEdit, onDeleteFrom, onBranch,
 
   useEffect(() => { if (!awayFromBottom) endRef.current?.scrollIntoView({ block: 'end' }) }, [awayFromBottom, messages])
 
+  useEffect(() => {
+    if (!openActions) return
+    const toolbar = document.getElementById(`message-actions-menu-${openActions}`)
+    toolbar?.scrollIntoView({ block: 'nearest' })
+    toolbar?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      const target = event.target
+      const actionRegion = target instanceof Element ? target.closest<HTMLElement>('[data-message-actions-for]') : null
+      if (actionRegion?.dataset.messageActionsFor !== openActions) setOpenActions(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenActions(null)
+    }
+    document.addEventListener('pointerdown', closeOnOutsidePress)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePress)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [openActions])
+
   const finishAction = (action: () => void) => {
     action()
     setOpenActions(null)
@@ -64,15 +86,16 @@ export function MessageList({ messages, profile, onEdit, onDeleteFrom, onBranch,
                 {streaming ? <TypingIndicator characterName={profile.characterName} /> : <div className="message-bubble"><span className="message-text">{message.content || message.parsed?.maintext}</span></div>}
                 {!streaming && message.role === 'user' && <span className="message-check" aria-label="已发送"><Check size={12} weight="bold" /></span>}
                 {!streaming && (
-                  <div className="message-action-wrap">
-                    <button id={`message-more-${message.id}`} className="message-more" type="button" aria-label="更多消息操作" aria-expanded={openActions === message.id} aria-controls={menuId} onClick={() => setOpenActions((current) => current === message.id ? null : message.id)}><DotsThree size={17} weight="bold" /></button>
-                    {openActions === message.id && (
-                      <div id={menuId} className="message-action-menu" role="menu" aria-label="消息操作菜单">
-                        <button id={`message-copy-${message.id}`} type="button" role="menuitem" onClick={() => finishAction(() => void navigator.clipboard?.writeText(message.content))}><Copy size={16} />复制消息</button>
-                        {message.role === 'user' ? <button id={`message-edit-${message.id}`} type="button" role="menuitem" onClick={() => finishAction(() => onEdit(message))}><PencilSimple size={16} />编辑并重新生成</button> : <button id={`message-regenerate-${message.id}`} type="button" role="menuitem" onClick={() => finishAction(() => void onRegenerate())}><ArrowClockwise size={16} />重新生成回复</button>}
-                        <button id={`message-branch-${message.id}`} type="button" role="menuitem" onClick={() => finishAction(() => onBranch(message))}><GitBranch size={16} />从此消息创建分支</button>
-                        <button id={`message-delete-from-${message.id}`} className="danger" type="button" role="menuitem" onClick={() => finishAction(() => onDeleteFrom(message))}><Trash size={16} />从此消息开始删除</button>
+                  <div className="message-action-wrap" data-message-actions-for={message.id}>
+                    {openActions === message.id ? (
+                      <div id={menuId} className="message-action-toolbar" role="menu" aria-label="消息操作菜单" aria-orientation="horizontal">
+                        <button id={`message-copy-${message.id}`} type="button" role="menuitem" aria-label="复制消息" title="复制消息" onClick={() => finishAction(() => void navigator.clipboard?.writeText(message.content))}><Copy size={17} aria-hidden="true" /></button>
+                        {message.role === 'user' ? <button id={`message-edit-${message.id}`} type="button" role="menuitem" aria-label="编辑并重新生成" title="编辑并重新生成" onClick={() => finishAction(() => onEdit(message))}><PencilSimple size={17} aria-hidden="true" /></button> : <button id={`message-regenerate-${message.id}`} type="button" role="menuitem" aria-label="重新生成回复" title="重新生成回复" onClick={() => finishAction(() => void onRegenerate())}><ArrowClockwise size={17} aria-hidden="true" /></button>}
+                        <button id={`message-branch-${message.id}`} type="button" role="menuitem" aria-label="从此消息创建分支" title="从此消息创建分支" onClick={() => finishAction(() => onBranch(message))}><GitBranch size={17} aria-hidden="true" /></button>
+                        <button id={`message-delete-from-${message.id}`} className="danger" type="button" role="menuitem" aria-label="从此消息开始删除" title="从此消息开始删除" onClick={() => finishAction(() => onDeleteFrom(message))}><Trash size={17} aria-hidden="true" /></button>
                       </div>
+                    ) : (
+                      <button id={`message-more-${message.id}`} className="message-more" type="button" aria-label="更多消息操作" aria-expanded="false" aria-controls={menuId} onClick={() => setOpenActions(message.id)}><DotsThree size={18} weight="bold" aria-hidden="true" /></button>
                     )}
                   </div>
                 )}
